@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { WorkationRequest } from './data';
 
-export const MODEL = process.env.AI_MODEL || 'anthropic/claude-sonnet-4.5';
+export const MODEL = process.env.AI_MODEL || 'openai/gpt-4.1';
 
 // Rule-based checks. These decide whether Approve is available.
 // The model explains them; it can't switch them off.
@@ -37,6 +37,10 @@ Rules you never break:
 - Risk levels come from the rules engine. Don't change them. Explain them.
 - If something could not be verified, say so plainly. An incomplete summary must say it is incomplete.
 - Cite sources by their exact names from the data (documents, steps, rules like BT_WE_12).
+- The only person requesting is the employee named in the facts. Never mention anyone else as the employee.
+- A step with state "Done" is complete. A document with status "ready" is present and valid. Never report these as missing or unverified.
+- Rule checks are already shown to Laura as their own banners. Never repeat a rule check as an anomaly; only add problems the rules did not catch.
+- Report an anomaly only if a rule check, a step state, a document status or a source check in the data shows it. Otherwise return an empty list.
 
 Writing style: plain English, short sentences, action first. No filler, no hedging words like "it seems". No em dashes.`;
 
@@ -57,6 +61,17 @@ export const AssessmentSchema = z.object({
 });
 export type Assessment = z.infer<typeof AssessmentSchema>;
 
+// Plain facts first, so the model reads state rather than guessing it from raw JSON
 export function requestContext(r: WorkationRequest) {
-  return JSON.stringify({ request: r, ruleChecks: ruleChecks(r), approveAvailable: canApprove(r) }, null, 2);
+  const checks = ruleChecks(r);
+  const facts = [
+    `Employee: ${r.employee}`,
+    `Trip: ${r.dates.label} (${r.dates.start} to ${r.dates.end}). Submitted ${r.submitted}.`,
+    `Steps: ${r.steps.map((s) => `${s.title} = ${s.state}`).join('; ')}`,
+    `Documents: ${r.documents.map((d) => `${d.name} = ${d.status}`).join('; ')}`,
+    `Sources: ${r.sourceChecks.filter((s) => s.status === 'current').length} of ${r.sourceChecks.length} current. ${r.sourceChecks.filter((s) => s.status !== 'current').map((s) => `${s.name} = ${s.status}`).join('; ') || 'None missing.'}`,
+    `Rule checks: ${checks.length ? checks.map((c) => `[${c.severity}] ${c.title}`).join('; ') : 'none'}`,
+    `Approve available (decided by rules): ${canApprove(r) ? 'yes' : 'no'}`,
+  ].join('\n');
+  return `FACTS\n${facts}\n\nFULL DATA\n${JSON.stringify({ request: r, ruleChecks: checks, approveAvailable: canApprove(r) }, null, 2)}`;
 }

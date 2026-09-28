@@ -52,7 +52,14 @@ export default function Page() {
   const [answer, setAnswer] = useState<{ q: string; text: string; streaming: boolean; error?: boolean } | null>(null);
   const [note, setNote] = useState('');
   const [tour, setTour] = useState<number | null>(null);
-  const goTour = useCallback((i: number) => { setMenu(false); setDialog(null); setOpen(true); setScenario(TOUR[i].scenario); setTour(i); }, []);
+  const tourResume = useRef(0);
+  const goTour = useCallback((i: number) => { setMenu(false); setDialog(null); setOpen(true); setScenario(TOUR[i].scenario); setTour(i); tourResume.current = i; }, []);
+  const closeTour = useCallback((finished: boolean) => { setTour(null); if (finished) tourResume.current = 0; }, []);
+  const tryQuestion = useCallback((q: string) => {
+    closeTour(true);
+    setQuestion(q);
+    setTimeout(() => { const el = document.getElementById('ask'); el?.scrollIntoView({ block: 'center', behavior: 'smooth' }); el?.focus(); }, 50);
+  }, [closeTour]);
   useEffect(() => {
     try { if (!localStorage.getItem('tour-seen')) { localStorage.setItem('tour-seen', '1'); setTimeout(() => goTour(0), 600); } } catch {}
   }, [goTour]);
@@ -66,15 +73,27 @@ export default function Page() {
     toastTimer.current = setTimeout(() => setToast(null), 10000);
   }, []);
 
-  const runAssessment = useCallback(async (id: ScenarioId) => {
+  // Only the latest request may write. A slow answer for another request is dropped.
+  const assessRun = useRef(0);
+  const assessCache = useRef<Partial<Record<ScenarioId, { data: Assessment; model: string }>>>({});
+  const runAssessment = useCallback(async (id: ScenarioId, force = false) => {
+    const run = ++assessRun.current;
+    const cached = assessCache.current[id];
+    if (cached && !force) { setAssess({ status: 'ok', ...cached }); return; }
     setAssess({ status: 'loading' });
+    // Wait a moment so skipping quickly through requests doesn't fire a call for each one
+    await new Promise((ok) => setTimeout(ok, 500));
+    if (run !== assessRun.current) return;
     try {
       const res = await fetch('/api/assess', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scenario: id }) });
       const json = await res.json();
+      if (run !== assessRun.current) return;
       if (!res.ok) throw new Error(json.error);
+      assessCache.current[id] = { data: json.assessment, model: json.model };
       setAssess({ status: 'ok', data: json.assessment, model: json.model });
       log({ kind: 'agent', title: 'Agent checked the request', body: json.assessment.summary, time: `Today, ${now()} · auto`, source: json.assessment.sources.join(', ') });
     } catch {
+      if (run !== assessRun.current) return;
       setAssess({ status: 'error' });
       log({ kind: 'agent-failed', title: "Agent couldn't run the check", body: 'The summary below is missing. Rules still decide if Approve is available.', time: `Today, ${now()} · auto` });
     }
@@ -161,12 +180,11 @@ export default function Page() {
   }
 
   const aiAnomalies = assess.status === 'ok' ? assess.data.anomalies : [];
-  const banners =
-    assess.status === 'ok'
-      ? aiAnomalies.map((a, i) => ({ i, title: a.title, detail: a.detail, action: a.suggestedAction, by: 'Flagged by the agent' }))
-      : assess.status === 'error'
-        ? checks.map((c, i) => ({ i, title: c.title, detail: c.detail, action: '', by: 'Flagged by rules' }))
-        : [];
+  // Rule checks always show. The agent's anomalies add to them, never replace them.
+  const banners = [
+    ...(assess.status === 'loading' ? [] : checks.map((c) => ({ title: c.title, detail: c.detail, action: '', by: 'Flagged by rules' }))),
+    ...(assess.status === 'ok' ? aiAnomalies.map((a) => ({ title: a.title, detail: a.detail, action: a.suggestedAction, by: 'Flagged by the agent' })) : []),
+  ].map((b, i) => ({ ...b, i }));
 
   const visibleActivity = showAll ? activity : activity.slice(0, 2);
 
@@ -250,6 +268,8 @@ export default function Page() {
 
               <div className="body">
                 <div className="content">
+                  {banners.some((b) => !dismissed[b.i]) && (
+                  <div className="alerts">
                   {banners.filter((b) => !dismissed[b.i]).map((b) => (
                     <div key={b.i} className="alert" role="status">
                       <span className="ic"><Icon name="alert" size={20} /></span>
@@ -264,6 +284,8 @@ export default function Page() {
                       </div>
                     </div>
                   ))}
+                  </div>
+                  )}
 
                   <div className="card card-flush">
                     <div className="card-header pad">
@@ -483,9 +505,9 @@ export default function Page() {
       <header className="cs-bar">
         <span className="t-caption cs-note">Case study concept by Debora Moratalla · Not a WorkFlex product · Sample data</span>
         <span className="t-caption c-muted cs-hint">{ORDER.length} requests need you · ‹ › or J K to move</span>
-        <button className="btn btn-secondary cs-tour" onClick={() => goTour(0)}><Icon name="sparkle" /> Walkthrough</button>
+        <button className="btn btn-secondary cs-tour" onClick={() => goTour(tourResume.current)}><Icon name="sparkle" /> Walkthrough</button>
       </header>
-      {tour !== null && <Tour step={tour} onStep={goTour} onClose={() => setTour(null)} />}
+      {tour !== null && <Tour step={tour} onStep={goTour} onClose={closeTour} onTry={tryQuestion} />}
     </>
   );
 }
