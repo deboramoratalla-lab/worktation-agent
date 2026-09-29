@@ -5,6 +5,7 @@ import { Icon, Logo, ShieldSolid, type IconName } from '@/components/Icon';
 import { scenarios, type ActivityEntry, type Level, type ScenarioId, type Step, type WorkationRequest } from '@/lib/data';
 import { canApprove, ruleChecks, type Assessment } from '@/lib/agent';
 import { Tour, TOUR } from '@/components/Tour';
+import { applyEdits, datesLabel, editsKey, formatDay, workingDays, type Edits } from '@/lib/scenario';
 
 const ORDER: ScenarioId[] = ['ready', 'working', 'check', 'conflict'];
 const rank: Record<Level, number> = { Low: 0, Medium: 1, High: 2 };
@@ -14,6 +15,8 @@ type DialogState =
   | null
   | { kind: 'reject' | 'message' | 'approve-anyway' | 'reminder'; text: string; streaming: boolean; reason?: string }
   | { kind: 'settings' }
+  | { kind: 'dates'; start: string; end: string }
+  | { kind: 'no-coverage'; text: string; streaming: boolean }
   | { kind: 'cancel' };
 
 async function streamText(url: string, body: object, onChunk: (full: string) => void, signal?: AbortSignal) {
@@ -37,14 +40,20 @@ const uid = () => `x${++seq}`;
 
 export default function Page() {
   const [scenario, setScenario] = useState<ScenarioId>('ready');
-  const req = useMemo<WorkationRequest>(() => scenarios[scenario].build(), [scenario]);
+  const baseReq = useMemo<WorkationRequest>(() => scenarios[scenario].build(), [scenario]);
+  // Laura's changes in this session (confirmed dates, new dates). Rules re-run on the edited request.
+  const [edits, setEdits] = useState<Partial<Record<ScenarioId, Edits>>>({});
+  const ed = useMemo<Edits>(() => edits[scenario] ?? {}, [edits, scenario]);
+  const edKey = editsKey(ed);
+  const req = useMemo<WorkationRequest>(() => applyEdits(baseReq, ed), [baseReq, ed]);
   const [activity, setActivity] = useState<ActivityEntry[]>(req.activity);
   const [assess, setAssess] = useState<AssessState>({ status: 'loading' });
   const [approved, setApproved] = useState(false);
+  const [noCoverage, setNoCoverage] = useState(false);
   const [open, setOpen] = useState(true);
   const [openRisk, setOpenRisk] = useState<Record<string, boolean>>({ ss: true });
   const [showAll, setShowAll] = useState(false);
-  const [dismissed, setDismissed] = useState<Record<number, boolean>>({});
+  const [dismissed, setDismissed] = useState<Record<string, boolean>>({});
   const [undone, setUndone] = useState<Record<string, boolean>>({});
   const [menu, setMenu] = useState(false);
   const [dialog, setDialog] = useState<DialogState>(null);
@@ -76,21 +85,22 @@ export default function Page() {
 
   // Only the latest request may write. A slow answer for another request is dropped.
   const assessRun = useRef(0);
-  const assessCache = useRef<Partial<Record<ScenarioId, { data: Assessment; model: string; at: string }>>>({});
-  const runAssessment = useCallback(async (id: ScenarioId, force = false) => {
+  const assessCache = useRef<Record<string, { data: Assessment; model: string; at: string }>>({});
+  const runAssessment = useCallback(async (id: ScenarioId, e: Edits = {}, force = false) => {
     const run = ++assessRun.current;
-    const cached = assessCache.current[id];
+    const ck = `${id}|${editsKey(e)}`;
+    const cached = assessCache.current[ck];
     if (cached && !force) { setAssess({ status: 'ok', ...cached }); return; }
     setAssess({ status: 'loading' });
     // Wait a moment so skipping quickly through requests doesn't fire a call for each one
     await new Promise((ok) => setTimeout(ok, 500));
     if (run !== assessRun.current) return;
     try {
-      const res = await fetch('/api/assess', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scenario: id }) });
+      const res = await fetch('/api/assess', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scenario: id, edits: e }) });
       const json = await res.json();
       if (run !== assessRun.current) return;
       if (!res.ok) throw new Error(json.error);
-      assessCache.current[id] = { data: json.assessment, model: json.model, at: json.at };
+      assessCache.current[ck] = { data: json.assessment, model: json.model, at: json.at };
       setAssess({ status: 'ok', data: json.assessment, model: json.model, at: json.at });
       log({ kind: 'agent', title: 'Agent checked the request', body: json.assessment.summary, time: `Today, ${now()} · auto`, source: json.assessment.sources.join(', ') });
     } catch {
@@ -106,27 +116,34 @@ export default function Page() {
   useEffect(() => {
     if (tour === null || prefetched.current) return;
     prefetched.current = true;
-    const ids = [...new Set(TOUR.map((t) => t.scenario))].filter((id) => id !== scenario && !assessCache.current[id]);
+    const empty = editsKey({});
+    const ids = [...new Set(TOUR.map((t) => t.scenario))].filter((id) => id !== scenario && !assessCache.current[`${id}|${empty}`]);
     ids.forEach((id, i) => setTimeout(async () => {
       try {
         const res = await fetch('/api/assess', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scenario: id }) });
         const json = await res.json();
-        if (res.ok && !assessCache.current[id]) assessCache.current[id] = { data: json.assessment, model: json.model, at: json.at };
+        if (res.ok && !assessCache.current[`${id}|${empty}`]) assessCache.current[`${id}|${empty}`] = { data: json.assessment, model: json.model, at: json.at };
       } catch { /* the step will load it normally */ }
     }, 300 * (i + 1)));
   }, [tour, scenario]);
 
   // Reset on scenario change
   useEffect(() => {
-    setActivity(req.activity);
+    setActivity(baseReq.activity);
     setApproved(false);
+    setNoCoverage(false);
     setDismissed({});
     setUndone({});
     setAnswer(null);
     setShowAll(false);
-    setOpenRisk({ [req.risks.slice().sort((a, b) => rank[b.level] - rank[a.level])[0].id]: true });
-    runAssessment(scenario);
-  }, [scenario, req, runAssessment]);
+    setOpenRisk({ [baseReq.risks.slice().sort((a, b) => rank[b.level] - rank[a.level])[0].id]: true });
+  }, [scenario, baseReq]);
+
+  // The agent re-checks whenever the request or Laura's edits change
+  useEffect(() => {
+    runAssessment(scenario, ed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenario, edKey, runAssessment]);
 
   // Keyboard: Esc closes drawer or dialog, J/K move through the queue
   useEffect(() => {
@@ -162,7 +179,7 @@ export default function Page() {
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     const apiKind = kind === 'approve-anyway' ? 'approve-note' : kind;
-    streamText('/api/draft', { scenario, kind: apiKind, reason }, (full) => setDialog((d) => (d && 'text' in d ? { ...d, text: full } : d)), ctrl.signal)
+    streamText('/api/draft', { scenario, kind: apiKind, reason, edits: ed }, (full) => setDialog((d) => (d && 'text' in d ? { ...d, text: full } : d)), ctrl.signal)
       .then(() => setDialog((d) => (d && 'text' in d ? { ...d, streaming: false } : d)))
       .catch(() => setDialog((d) => (d && 'text' in d ? { ...d, streaming: false, text: d.text || '' } : d)));
   }
@@ -170,6 +187,60 @@ export default function Page() {
     abortRef.current?.abort();
     setDialog(null);
     lastFocus.current?.focus();
+  }
+
+  // ----- Dates: rules pause, Laura decides -----
+  function confirmDates() {
+    const sc = scenario, prev = ed;
+    setEdits((all) => ({ ...all, [sc]: { ...prev, confirmed: [...new Set([...(prev.confirmed ?? []), 'past-dates'])] } }));
+    log({ kind: 'decision', title: 'You confirmed the dates are correct', body: `Trip ${req.dates.label}. This rule no longer pauses Approve.`, time: `Today, ${now()}`, source: 'Rule: trip dates before the request was submitted (past-dates)' });
+    showToast('Dates confirmed. The agent is re-checking the request.', () => {
+      setEdits((all) => ({ ...all, [sc]: prev }));
+      log({ kind: 'decision', title: 'You undid the date confirmation', time: `Today, ${now()}` });
+    });
+  }
+  function openDates() {
+    lastFocus.current = document.activeElement as HTMLElement;
+    setMenu(false);
+    setDialog({ kind: 'dates', start: req.dates.start, end: req.dates.end });
+  }
+  function saveDates(start: string, end: string) {
+    const sc = scenario, prev = ed, before = req.dates.label;
+    const changedDays = workingDays(start, end) !== req.workingDays;
+    setEdits((all) => ({ ...all, [sc]: { dates: { start, end }, reopen: changedDays ? ['mgr'] : [] } }));
+    closeDialog();
+    log({ kind: 'decision', title: `You changed the dates to ${datesLabel(start, end)}`, body: `Before: ${before}.${changedDays ? ' Manager approval reopens.' : ''} The agent re-checks the risk.`, time: `Today, ${now()}` });
+    showToast(`Dates changed. ${firstName} and Tom were notified.`, () => {
+      setEdits((all) => ({ ...all, [sc]: prev }));
+      log({ kind: 'decision', title: 'You undid the change of dates', time: `Today, ${now()}` });
+    });
+  }
+
+  // ----- Approve without coverage -----
+  function openNoCoverage() {
+    lastFocus.current = document.activeElement as HTMLElement;
+    setDialog({ kind: 'no-coverage', text: '', streaming: false });
+  }
+  function draftNoCoverage() {
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    setDialog((d) => (d?.kind === 'no-coverage' ? { ...d, text: '', streaming: true } : d));
+    streamText('/api/draft', { scenario, kind: 'no-coverage-note', edits: ed }, (full) => setDialog((d) => (d?.kind === 'no-coverage' ? { ...d, text: full } : d)), ctrl.signal)
+      .then(() => setDialog((d) => (d?.kind === 'no-coverage' ? { ...d, streaming: false } : d)))
+      .catch(() => setDialog((d) => (d?.kind === 'no-coverage' ? { ...d, streaming: false } : d)));
+  }
+  function approveWithoutCoverage(reason: string) {
+    closeDialog();
+    setApproved(true);
+    setNoCoverage(true);
+    log({ kind: 'agent', title: 'Agent keeps chasing the business visa', body: 'The visa step stays with the agent. WorkFlex coverage starts when the visa is issued.', time: `Today, ${now()} · auto` });
+    log({ kind: 'decision', title: 'You approved without WorkFlex coverage', body: `Reason: ${reason}`, time: `Today, ${now()}`, source: 'Work entitlement: high risk, business visa not issued (WE_TH_03)' });
+    showToast(`Approved without coverage. ${firstName} and Tom were notified.`, () => {
+      setApproved(false);
+      setNoCoverage(false);
+      log({ kind: 'decision', title: 'You undid the approval', time: `Today, ${now()}` });
+    });
   }
 
   function approve(reason?: string) {
@@ -188,7 +259,7 @@ export default function Page() {
     setQuestion('');
     setAnswer({ q, text: '', streaming: true });
     try {
-      const full = await streamText('/api/ask', { scenario, question: q }, (t) => setAnswer({ q, text: t, streaming: true }));
+      const full = await streamText('/api/ask', { scenario, question: q, edits: ed }, (t) => setAnswer({ q, text: t, streaming: true }));
       setAnswer({ q, text: full, streaming: false });
       log({ kind: 'agent', title: `Agent answered: “${q}”`, body: full, time: `Today, ${now()} · on request` });
     } catch {
@@ -198,10 +269,20 @@ export default function Page() {
 
   const aiAnomalies = assess.status === 'ok' ? assess.data.anomalies : [];
   // Rule checks always show. The agent's anomalies add to them, never replace them.
-  const banners = [
-    ...(assess.status === 'loading' ? [] : checks.map((c) => ({ title: c.title, detail: c.detail, action: '', by: 'Flagged by rules' }))),
-    ...(assess.status === 'ok' ? aiAnomalies.map((a) => ({ title: a.title, detail: a.detail, action: a.suggestedAction, by: 'Flagged by the agent' })) : []),
-  ].map((b, i) => ({ ...b, i }));
+  // Date conflicts use the fixed Figma copy, never AI text. One banner covers both date rules.
+  const pastDates = checks.some((c) => c.id === 'past-dates');
+  type Banner = { title: string; detail: string; action: string; by: string; kind: 'dates' | 'rule' | 'info' | 'agent' };
+  const tripYear = Number(req.dates.start.slice(0, 4));
+  const banners: Banner[] = [
+    ...(assess.status === 'loading' ? [] : checks.filter((c) => !(pastDates && c.id === 'year-mismatch')).map((c): Banner => c.id === 'past-dates'
+      ? { title: 'These dates are in the past', detail: `The trip was ${req.dates.label}, but the request was created on ${formatDay(req.submitted)}. The risk check and day balance use these dates, so check them with ${firstName} before deciding.`, action: '', by: 'Flagged by rules', kind: 'dates' }
+      : { title: c.title, detail: c.detail, action: '', by: 'Flagged by rules', kind: 'rule' })),
+    ...(ed.confirmed?.includes('past-dates') && tripYear !== Number(req.today.slice(0, 4)) ? [{ title: `Balance shown for ${tripYear}`, detail: 'Showing the year of the trip, not the current year.', action: '', by: 'Flagged by rules', kind: 'info' as const }] : []),
+    ...(assess.status === 'ok' ? aiAnomalies.map((a): Banner => ({ title: a.title, detail: a.detail, action: a.suggestedAction, by: 'Flagged by the agent', kind: 'agent' })) : []),
+  ];
+  const blocking = checks.some((c) => c.severity === 'blocking');
+  // Visa not issued and nothing else blocking: Laura may approve, but WorkFlex won't cover it
+  const canApproveWithoutCoverage = !approvable && !blocking && req.steps.some((s) => s.id === 'visa' && s.state !== 'Done');
 
   const visibleActivity = showAll ? activity : activity.slice(0, 2);
 
@@ -274,7 +355,7 @@ export default function Page() {
                   </button>
                   {menu && (
                     <div className="menu" role="menu">
-                      <button role="menuitem" onClick={() => { setMenu(false); showToast('Changing dates is not part of this prototype.'); }}><Icon name="calendar" /> Change dates</button>
+                      <button role="menuitem" onClick={openDates}><Icon name="calendar" /> Change dates</button>
                       <button role="menuitem" onClick={() => openDraft('message')}><Icon name="message" /> Message {firstName}</button>
                       <hr />
                       <button role="menuitem" className="danger" onClick={() => { lastFocus.current = document.activeElement as HTMLElement; setMenu(false); setDialog({ kind: 'cancel' }); }}><Icon name="close" /> Cancel request</button>
@@ -285,20 +366,27 @@ export default function Page() {
 
               <div className="body">
                 <div className="content">
-                  {banners.some((b) => !dismissed[b.i]) && (
+                  {banners.some((b) => !dismissed[b.title]) && (
                   <div className="alerts">
-                  {banners.filter((b) => !dismissed[b.i]).map((b) => (
-                    <div key={b.i} className="alert" role="status">
+                  {banners.filter((b) => !dismissed[b.title]).map((b) => (
+                    <div key={b.title} className={`alert ${b.kind === 'info' ? 'info' : ''}`} role="status">
                       <span className="ic"><Icon name="alert" size={20} /></span>
                       <div className="alert-text">
                         <p className="t-heading-s">{b.title}</p>
                         <p className="c-secondary">{b.detail}{b.action ? ` ${b.action}.` : ''}</p>
-                        <div className="alert-actions">
-                          {b.by === 'Flagged by rules' && <button className="btn btn-secondary" onClick={() => openDraft('message')}><Icon name="message" /> Ask {firstName} to confirm</button>}
-                          <span className="t-caption" style={{ color: b.by.includes('agent') ? 'var(--color-agent-fg)' : 'var(--color-text-muted)' }}>{b.by}</span>
-                          <button className="link-btn t-caption" onClick={() => { setDismissed((d) => ({ ...d, [b.i]: true })); log({ kind: 'decision', title: `You dismissed a flag: ${b.title}`, time: `Today, ${now()}` }); }}>Dismiss</button>
+                        {b.kind === 'rule' && <div className="alert-actions"><button className="btn btn-secondary" onClick={() => openDraft('message')}><Icon name="message" /> Ask {firstName} to confirm</button></div>}
+                        <div className="alert-meta t-caption">
+                          {b.kind === 'agent' && <span style={{ color: 'var(--color-agent-fg)', display: 'inline-flex' }}><Icon name="sparkle" size={12} /></span>}
+                          <span style={{ color: b.kind === 'agent' ? 'var(--color-agent-fg)' : undefined }}>{b.by}</span><span aria-hidden="true">·</span>
+                          <button className="link-btn t-caption" onClick={() => { setDismissed((d) => ({ ...d, [b.title]: true })); log({ kind: 'decision', title: `You dismissed a flag: ${b.title}`, time: `Today, ${now()}` }); }}>Dismiss</button>
                         </div>
                       </div>
+                      {b.kind === 'dates' && (
+                        <div className="alert-side">
+                          <button className="btn btn-ghost" onClick={confirmDates}>Dates are correct</button>
+                          <button className="btn btn-secondary" onClick={openDates}>Change dates</button>
+                        </div>
+                      )}
                     </div>
                   ))}
                   </div>
@@ -398,7 +486,7 @@ export default function Page() {
                       {approved ? (
                         <>
                           <p className="t-heading-m">Approved</p>
-                          <p className="c-secondary">You approved this request today. {firstName} and Tom were notified.</p>
+                          <p className="c-secondary">{noCoverage ? `You approved this request today without WorkFlex coverage. ${firstName} and Tom were notified. The agent keeps chasing the visa.` : `You approved this request today. ${firstName} and Tom were notified.`}</p>
                         </>
                       ) : assess.status === 'loading' ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }} aria-busy="true">
@@ -410,7 +498,7 @@ export default function Page() {
                         <>
                           <p className="t-heading-m">The agent couldn&apos;t run the check</p>
                           <p className="c-secondary">Review the steps and documents yourself. Approve still follows the rules.</p>
-                          <button className="link-btn t-label-s" onClick={() => runAssessment(scenario)}>Try again</button>
+                          <button className="link-btn t-label-s" onClick={() => runAssessment(scenario, ed, true)}>Try again</button>
                         </>
                       ) : (
                         <>
@@ -436,6 +524,12 @@ export default function Page() {
 
                     {approved ? (
                       <div className="done-box"><Icon name="check" /> Approved today</div>
+                    ) : canApproveWithoutCoverage ? (
+                      <div className="actions stacked">
+                        <button className="btn btn-secondary btn-block" onClick={() => openDraft('reject')}><Icon name="close" /> Reject</button>
+                        <button className="btn btn-ghost btn-block" onClick={openNoCoverage}>Approve without coverage</button>
+                        <p className="t-caption c-danger">Approving now means WorkFlex won&apos;t cover this trip until the visa is issued.</p>
+                      </div>
                     ) : (
                       <div className="actions">
                         <button className="btn btn-primary btn-block" disabled={!approvable} aria-describedby={!approvable ? 'why-locked' : undefined} onClick={() => (needsYou ? openDraft('approve-anyway') : approve())}>
@@ -443,7 +537,7 @@ export default function Page() {
                         </button>
                         <button className="btn btn-secondary btn-block" onClick={() => openDraft('reject')}><Icon name="close" /> Reject</button>
                         <p id="why-locked" className="t-caption c-muted">
-                          {!approvable ? (checks.some((c) => c.severity === 'blocking') ? 'Approve is paused until the data is fixed.' : 'Approve unlocks when every step is done.') : `Rejecting asks for a reason. ${firstName} and their manager see it.`}
+                          {!approvable ? (pastDates ? 'Approving is paused until the dates are confirmed or corrected.' : blocking ? 'Approve is paused until the data is fixed.' : 'Approve unlocks when every step is done.') : `Rejecting asks for a reason. ${firstName} and their manager see it.`}
                         </p>
                       </div>
                     )}
@@ -483,6 +577,58 @@ export default function Page() {
               </ul>
               <p className="t-caption c-muted">Every agent action is logged in Activity with the setting that allowed it.</p>
               <div className="dialog-actions"><button className="btn btn-secondary" autoFocus onClick={closeDialog}>Close</button></div>
+            </>
+          ) : dialog.kind === 'dates' ? (() => {
+            const nd = workingDays(dialog.start, dialog.end);
+            const delta = nd - req.workingDays;
+            const unchanged = dialog.start === req.dates.start && dialog.end === req.dates.end;
+            const { before, limit } = req.daysAbroad;
+            return (
+              <>
+                <h2 id="dlg-title" className="t-heading-m" style={{ margin: 0 }}>Change trip dates</h2>
+                <p className="c-secondary">The agent re-checks the risk before anything is saved.</p>
+                <div className="date-fields">
+                  <label className="field"><span className="t-caption c-secondary">From</span><input type="date" autoFocus value={dialog.start} onChange={(e) => setDialog({ ...dialog, start: e.target.value })} /></label>
+                  <label className="field"><span className="t-caption c-secondary">To</span><input type="date" value={dialog.end} min={dialog.start} onChange={(e) => setDialog({ ...dialog, end: e.target.value })} /></label>
+                </div>
+                <div className="impact" aria-live="polite">
+                  <p className="t-overline">Impact</p>
+                  {unchanged ? <p>Pick new dates to see what changes.</p> : nd > 0 ? (
+                    <>
+                      <p>{delta === 0 ? `Same ${nd} working days` : `${delta > 0 ? '+' : ''}${delta} ${Math.abs(delta) === 1 ? 'day' : 'days'}`}: uses {before + nd} of {firstName}&apos;s {limit} in {dialog.start.slice(0, 4)}</p>
+                      <p>Risk stays {topLevel.toLowerCase()}, no new dimensions</p>
+                      <p>{delta === 0 ? 'Reopens: nothing. Same working days, so approvals stay valid' : 'Reopens: Manager approval. IT security stays approved'}</p>
+                      {dialog.start < req.submitted && <p className="c-danger">Still before the request date ({formatDay(req.submitted)})</p>}
+                    </>
+                  ) : <p>Pick an end date on or after the start date, with at least one working day.</p>}
+                </div>
+                <div className="dialog-actions">
+                  <button className="btn btn-secondary" onClick={closeDialog}>Cancel</button>
+                  <button className="btn btn-primary" disabled={nd === 0 || unchanged} onClick={() => saveDates(dialog.start, dialog.end)}><Icon name="check" /> Save and notify</button>
+                </div>
+              </>
+            );
+          })() : dialog.kind === 'no-coverage' ? (
+            <>
+              <h2 id="dlg-title" className="t-heading-m" style={{ margin: 0 }}>Approve without WorkFlex coverage?</h2>
+              <p className="c-secondary">{firstName}&apos;s visa isn&apos;t issued yet. If you approve now, WorkFlex won&apos;t cover this trip for work entitlement until it is.</p>
+              <div className="changes">
+                <p className="t-overline">What changes</p>
+                <p>Liability for work entitlement stays with your company</p>
+                <p>{firstName} and Tom are told the trip is approved</p>
+                <p>The agent keeps chasing the visa</p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <label htmlFor="dlg-text" className="t-caption c-secondary" style={{ flex: 1 }}>Reason (required, saved to the audit log)</label>
+                <button className="link-btn t-caption" onClick={draftNoCoverage} disabled={dialog.streaming} style={{ display: 'inline-flex', gap: 4, alignItems: 'center', color: 'var(--color-agent-fg)' }}><Icon name="sparkle" size={12} /> Draft reason</button>
+              </div>
+              {dialog.streaming && <div className="draft-note"><Icon name="sparkle" size={14} />The agent is drafting…</div>}
+              <textarea id="dlg-text" autoFocus value={dialog.text} onChange={(e) => setDialog({ ...dialog, text: e.target.value, streaming: false })} />
+              {/\[.*\]/.test(dialog.text) && <p className="t-caption c-muted">Replace the part in [brackets] to continue.</p>}
+              <div className="dialog-actions">
+                <button className="btn btn-secondary" onClick={closeDialog}>Cancel</button>
+                <button className="btn btn-danger" disabled={!dialog.text.trim() || dialog.streaming || /\[.*\]/.test(dialog.text)} onClick={() => approveWithoutCoverage(dialog.text.trim())}>Approve without coverage</button>
+              </div>
             </>
           ) : dialog.kind === 'cancel' ? (
             <>
@@ -631,7 +777,7 @@ function Dialog({ children, onClose }: { children: React.ReactNode; onClose: () 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
       if (e.key !== 'Tab') return;
-      const f = Array.from(el.querySelectorAll<HTMLElement>('button:not(:disabled), textarea'));
+      const f = Array.from(el.querySelectorAll<HTMLElement>('button:not(:disabled), textarea, input, a[href]'));
       if (!f.length) return;
       const i = f.indexOf(document.activeElement as HTMLElement);
       if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }

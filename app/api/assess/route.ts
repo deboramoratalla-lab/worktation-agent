@@ -1,6 +1,6 @@
 import { generateObject } from 'ai';
 import { AssessmentSchema, MODEL, SYSTEM, canApprove, requestContext, ruleChecks } from '@/lib/agent';
-import { loadScenario } from '@/lib/scenario';
+import { cleanEdits, editsKey, loadScenario } from '@/lib/scenario';
 
 export const maxDuration = 30;
 
@@ -15,9 +15,9 @@ function dedupe<T extends { title: string }>(anomalies: T[], rules: { title: str
 const cache = new Map<string, { assessment: unknown; at: string }>();
 
 export async function POST(req: Request) {
-  const { scenario } = await req.json().catch(() => ({}));
-  const r = loadScenario(scenario);
-  const key = `${MODEL}:${scenario}`;
+  const { scenario, edits } = await req.json().catch(() => ({}));
+  const r = loadScenario(scenario, edits);
+  const key = `${MODEL}:${scenario}:${editsKey(cleanEdits(edits))}`;
   const hit = cache.get(key);
   if (hit) return Response.json({ assessment: hit.assessment, checks: ruleChecks(r), approveAvailable: canApprove(r), model: MODEL, at: hit.at });
   try {

@@ -8,6 +8,11 @@ export const MODEL = process.env.AI_MODEL || 'openai/gpt-4.1';
 export type Check = { id: string; severity: 'blocking' | 'warning'; title: string; detail: string };
 
 export function ruleChecks(r: WorkationRequest): Check[] {
+  const all = rawChecks(r);
+  return all.filter((c) => !r.confirmedRules?.includes(c.id));
+}
+
+function rawChecks(r: WorkationRequest): Check[] {
   const out: Check[] = [];
   if (r.dates.start < r.submitted) {
     out.push({ id: 'past-dates', severity: 'blocking', title: 'Trip dates are before the request was submitted', detail: `Trip starts ${r.dates.start}, request submitted ${r.submitted}.` });
@@ -73,6 +78,7 @@ export function requestContext(r: WorkationRequest) {
     `Sources: ${r.sourceChecks.filter((s) => s.status === 'current').length} of ${r.sourceChecks.length} current. ${r.sourceChecks.filter((s) => s.status !== 'current').map((s) => `${s.name} = ${s.status}`).join('; ') || 'None missing.'}`,
     `Rule checks: ${checks.length ? checks.map((c) => `[${c.severity}] ${c.title}`).join('; ') : 'none'}`,
     `Approve available (decided by rules): ${canApprove(r) ? 'yes' : 'no'}`,
+    ...(r.confirmedRules?.length ? [`Laura confirmed and lifted these rule checks: ${r.confirmedRules.join(', ')}. Treat the data as correct; don't flag it again.`] : []),
   ].join('\n');
   return `FACTS\n${facts}\n\nFULL DATA\n${JSON.stringify({ request: r, ruleChecks: checks, approveAvailable: canApprove(r) }, null, 2)}`;
 }

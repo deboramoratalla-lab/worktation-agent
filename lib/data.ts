@@ -35,6 +35,7 @@ export type WorkationRequest = {
   documents: Doc[];
   activity: ActivityEntry[];
   sourceChecks: { name: string; status: 'current' | 'unreachable' | 'missing' }[];
+  confirmedRules?: string[]; // rule ids Laura confirmed in this session. Only she can set these, never the agent.
 };
 
 const base: WorkationRequest = {
