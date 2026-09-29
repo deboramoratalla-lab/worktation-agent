@@ -397,7 +397,7 @@ export default function Page() {
                       <p className="t-heading-s">Risk assessment</p>
                       <button className="btn btn-ghost"><Icon name="external-link" /> Full report</button>
                     </div>
-                    <p className="pad c-secondary">{scenario === 'working' ? 'Checked on 1 Apr. Waiting for the business visa.' : `Re-checked on 3 Apr after ${firstName} uploaded the visa.`} {req.risks.filter((r) => r.level !== 'Low').length} {topLevel === 'High' ? 'high' : 'medium'}, {req.lowCount + req.risks.filter((r) => r.level === 'Low').length} low.</p>
+                    <p className="pad c-secondary">{scenario === 'working' ? 'Checked on 1 Apr. Waiting for the business visa.' : `Re-checked on 3 Apr after ${firstName} uploaded the visa.`} {(['High', 'Medium'] as const).map((l) => req.risks.filter((r) => r.level === l).length ? `${req.risks.filter((r) => r.level === l).length} ${l.toLowerCase()}, ` : '').join('')}{req.lowCount + req.risks.filter((r) => r.level === 'Low').length} low.</p>
                     <div>
                       {req.risks.slice().sort((a, b) => rank[b.level] - rank[a.level]).map((r) => (
                         <div key={r.id} className={`risk-row ${openRisk[r.id] ? 'open' : ''}`}>
@@ -595,7 +595,7 @@ export default function Page() {
                   <p className="t-overline">Impact</p>
                   {unchanged ? <p>Pick new dates to see what changes.</p> : nd > 0 ? (
                     <>
-                      <p>{delta === 0 ? `Same ${nd} working days` : `${delta > 0 ? '+' : ''}${delta} ${Math.abs(delta) === 1 ? 'day' : 'days'}`}: uses {before + nd} of {firstName}&apos;s {limit} in {dialog.start.slice(0, 4)}</p>
+                      <p>{delta === 0 ? `Same ${nd} working days` : `${delta > 0 ? '+' : ''}${delta} ${Math.abs(delta) === 1 ? 'day' : 'days'}`}: uses {before + nd} of {limit} in {req.to.country}, {dialog.start.slice(0, 4)}</p>
                       <p>Risk stays {topLevel.toLowerCase()}, no new dimensions</p>
                       <p>{delta === 0 ? 'Reopens: nothing. Same working days, so approvals stay valid' : 'Reopens: Manager approval. IT security stays approved'}</p>
                       {dialog.start < req.submitted && <p className="c-danger">Still before the request date ({formatDay(req.submitted)})</p>}
@@ -753,7 +753,7 @@ function Days({ req, blocked }: { req: WorkationRequest; blocked: boolean }) {
   return (
     <div className="days" style={blocked ? { background: 'var(--color-status-warning-bg)' } : undefined}>
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        <span className="t-caption c-secondary" style={{ flex: 1 }}>Days abroad in {year}{blocked ? ` (trip is in ${req.dates.start.slice(0, 4)})` : ''}</span>
+        <span className="t-caption c-secondary" style={{ flex: 1 }}>Days in {req.to.country}, {year}{blocked ? ` (trip is in ${req.dates.start.slice(0, 4)})` : ''}</span>
         <span className="t-label-m">{before + thisTrip} of {limit}</span>
       </div>
       <div className="days-bar" role="img" aria-label={`${before} days before, ${thisTrip} this trip, ${left} left`}>
@@ -765,6 +765,14 @@ function Days({ req, blocked }: { req: WorkationRequest; blocked: boolean }) {
         <span><i style={{ background: 'var(--color-action-primary-bg)' }} />{thisTrip} this trip</span>
         <span><i style={{ background: 'var(--color-border-default)' }} />{left} left</span>
       </div>
+      <p className="t-caption c-muted">
+        {req.from.country}–{req.to.country} tax treaty. {limit} days per host country;{' '}
+        <span className="tip">
+          <button type="button" className="link-btn t-caption" aria-describedby="days-rule">counting rule</button>
+          <span id="days-rule" role="tooltip">Counted per host country under the applicable tax treaty. Some treaties use the calendar year, others any 12 months.</span>
+        </span>{' '}
+        in the tooltip.
+      </p>
     </div>
   );
 }

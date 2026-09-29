@@ -48,12 +48,13 @@ const base: WorkationRequest = {
   workingDays: 5,
   submitted: '2026-03-31',
   today: '2026-04-04',
-  daysAbroad: { year: 2026, before: 21, thisTrip: 5, limit: 183 },
+  // Days in the destination country only: the 183-day limit is per host country under the tax treaty
+  daysAbroad: { year: 2026, before: 0, thisTrip: 5, limit: 183 },
   risks: [
     { id: 'ss', name: 'Social security', level: 'Medium', why: 'A1 certificate needed. Issued by WorkFlex on 2 Apr.', rule: 'BT_WE_12' },
     { id: 'we', name: 'Work entitlement', level: 'Low', why: 'Business visa uploaded on 3 Apr covers remote work for 5 days.', rule: 'WE_TH_03' },
   ],
-  lowCount: 8,
+  lowCount: 6, // WorkFlex checks 8 dimensions: the 2 shown plus these
   steps: [
     { id: 'mgr', title: 'Manager approval', owner: 'Approver', state: 'Done', meta: 'Tom Weber · 31 Mar' },
     { id: 'visa', title: 'Thai business visa', owner: 'Employee', state: 'Done', meta: 'Uploaded by Lili · 3 Apr' },
