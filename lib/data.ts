@@ -16,6 +16,7 @@ export type ActivityEntry = {
   time: string;
   undoable?: boolean;
   source?: string;
+  snapshot?: string[]; // decision snapshot: what Laura saw when she decided. Locked, never edited.
 };
 
 export type WorkationRequest = {

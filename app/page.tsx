@@ -13,10 +13,11 @@ const rank: Record<Level, number> = { Low: 0, Medium: 1, High: 2 };
 type AssessState = { status: 'loading' } | { status: 'ok'; data: Assessment; model: string; at: string } | { status: 'error' };
 type DialogState =
   | null
-  | { kind: 'reject' | 'message' | 'approve-anyway' | 'reminder'; text: string; streaming: boolean; reason?: string }
+  | { kind: 'reject' | 'message' | 'reminder'; text: string; streaming: boolean; reason?: string }
   | { kind: 'settings' }
   | { kind: 'dates'; start: string; end: string }
-  | { kind: 'no-coverage'; text: string; streaming: boolean }
+  // Approving past a rule. The reason is always written by Laura; the agent only suggests checks.
+  | { kind: 'override'; variant: 'no-coverage' | 'approve-anyway'; text: string; checked: boolean[] }
   | { kind: 'cancel' };
 
 async function streamText(url: string, body: object, onChunk: (full: string) => void, signal?: AbortSignal) {
@@ -34,6 +35,14 @@ async function streamText(url: string, body: object, onChunk: (full: string) => 
   return full;
 }
 
+// Checks the agent suggests before approving past a rule. Laura ticks them; the reason stays hers.
+const OVERRIDE_CHECKS: Record<'no-coverage' | 'approve-anyway', (first: string) => string[]> = {
+  'no-coverage': (first) => ['Visa appointment is booked before the trip', 'Tom knows the company carries the risk', `${first} won't work until the visa is issued`],
+  'approve-anyway': () => ['A1 checked with payroll', 'Certificate number noted'],
+};
+const RULES_VERSION = 'WorkFlex engine, Sep 2026';
+type Role = 'gm' | 'hr';
+
 const now = () => new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 let seq = 0;
 const uid = () => `x${++seq}`;
@@ -50,6 +59,9 @@ export default function Page() {
   const [assess, setAssess] = useState<AssessState>({ status: 'loading' });
   const [approved, setApproved] = useState(false);
   const [noCoverage, setNoCoverage] = useState(false);
+  // Demo only: who is looking. Only Global Mobility may approve past a rule.
+  const [role, setRole] = useState<Role>('gm');
+  const [sentToGM, setSentToGM] = useState(false);
   const [open, setOpen] = useState(true);
   const [openRisk, setOpenRisk] = useState<Record<string, boolean>>({ ss: true });
   const [showAll, setShowAll] = useState(false);
@@ -132,6 +144,7 @@ export default function Page() {
     setActivity(baseReq.activity);
     setApproved(false);
     setNoCoverage(false);
+    setSentToGM(false);
     setDismissed({});
     setUndone({});
     setAnswer(null);
@@ -171,15 +184,14 @@ export default function Page() {
 
   // ----- Dialog helpers -----
   const abortRef = useRef<AbortController | null>(null);
-  function openDraft(kind: 'reject' | 'message' | 'approve-anyway' | 'reminder', reason?: string) {
+  function openDraft(kind: 'reject' | 'message' | 'reminder', reason?: string) {
     lastFocus.current = document.activeElement as HTMLElement;
     setMenu(false);
     setDialog({ kind, text: '', streaming: true, reason });
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
-    const apiKind = kind === 'approve-anyway' ? 'approve-note' : kind;
-    streamText('/api/draft', { scenario, kind: apiKind, reason, edits: ed }, (full) => setDialog((d) => (d && 'text' in d ? { ...d, text: full } : d)), ctrl.signal)
+    streamText('/api/draft', { scenario, kind, reason, edits: ed }, (full) => setDialog((d) => (d && 'text' in d ? { ...d, text: full } : d)), ctrl.signal)
       .then(() => setDialog((d) => (d && 'text' in d ? { ...d, streaming: false } : d)))
       .catch(() => setDialog((d) => (d && 'text' in d ? { ...d, streaming: false, text: d.text || '' } : d)));
   }
@@ -216,39 +228,61 @@ export default function Page() {
     });
   }
 
-  // ----- Approve without coverage -----
-  function openNoCoverage() {
+  // ----- Decision snapshot: what Laura saw when she decided. Locked; Undo adds a new entry. -----
+  function logDecision(entry: Omit<ActivityEntry, 'id'>) {
+    const current = req.sourceChecks.filter((s) => s.status === 'current').length;
+    const checkedAt = assess.status === 'ok' ? new Date(assess.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : null;
+    const dims = req.risks.slice().sort((a, b) => rank[b.level] - rank[a.level]).map((r) => `${r.name} ${r.level.toLowerCase()}`).join(', ');
+    const { before, thisTrip, limit, year } = req.daysAbroad;
+    const snapshot = [
+      `Risk after mitigation: ${topLevel.toLowerCase()} (${dims}, ${req.lowCount} more low)`,
+      `Sources: ${current} of ${req.sourceChecks.length} current${checkedAt ? `, checked ${checkedAt}` : ''}`,
+      `Rules: ${RULES_VERSION}. ${checks.length ? `Open: ${checks.map((c) => c.title).join('; ')}` : 'No open rule checks'}${req.confirmedRules?.length ? `. Confirmed by you: ${req.confirmedRules.join(', ')}` : ''}`,
+      `Days in ${req.to.country}, ${year}: ${before + thisTrip} of ${limit}`,
+      assess.status === 'ok' ? `Agent summary saved as shown: “${assess.data.headline}. ${assess.data.summary}”` : 'Agent summary: not available, the agent couldn’t run the check',
+    ];
+    const time = `Today, ${now()}`;
+    log({ kind: 'decision', title: 'Decision snapshot', body: 'What you saw when you decided', time, snapshot });
+    log({ ...entry, time });
+  }
+
+  // ----- Approving past a rule (Global Mobility only) -----
+  function openOverride(variant: 'no-coverage' | 'approve-anyway') {
     lastFocus.current = document.activeElement as HTMLElement;
-    setDialog({ kind: 'no-coverage', text: '', streaming: false });
+    setDialog({ kind: 'override', variant, text: '', checked: OVERRIDE_CHECKS[variant](firstName).map(() => false) });
   }
-  function draftNoCoverage() {
-    abortRef.current?.abort();
-    const ctrl = new AbortController();
-    abortRef.current = ctrl;
-    setDialog((d) => (d?.kind === 'no-coverage' ? { ...d, text: '', streaming: true } : d));
-    streamText('/api/draft', { scenario, kind: 'no-coverage-note', edits: ed }, (full) => setDialog((d) => (d?.kind === 'no-coverage' ? { ...d, text: full } : d)), ctrl.signal)
-      .then(() => setDialog((d) => (d?.kind === 'no-coverage' ? { ...d, streaming: false } : d)))
-      .catch(() => setDialog((d) => (d?.kind === 'no-coverage' ? { ...d, streaming: false } : d)));
-  }
-  function approveWithoutCoverage(reason: string) {
+  function confirmOverride(variant: 'no-coverage' | 'approve-anyway', reason: string, checked: boolean[]) {
+    const items = OVERRIDE_CHECKS[variant](firstName);
+    const ticked = items.filter((_, i) => checked[i]);
+    const checksLine = `Checked before approving: ${ticked.length ? ticked.join('; ') : 'none'} (${ticked.length} of ${items.length} suggested)`;
     closeDialog();
     setApproved(true);
-    setNoCoverage(true);
-    log({ kind: 'agent', title: 'Agent keeps chasing the business visa', body: 'The visa step stays with the agent. WorkFlex coverage starts when the visa is issued.', time: `Today, ${now()} · auto` });
-    log({ kind: 'decision', title: 'You approved without WorkFlex coverage', body: `Reason: ${reason}`, time: `Today, ${now()}`, source: 'Work entitlement: high risk, business visa not issued (WE_TH_03)' });
-    showToast(`Approved without coverage. ${firstName} and Tom were notified.`, () => {
+    setNoCoverage(variant === 'no-coverage');
+    if (variant === 'no-coverage') log({ kind: 'agent', title: 'Agent keeps chasing the business visa', body: 'The visa step stays with the agent. WorkFlex coverage starts when the visa is issued.', time: `Today, ${now()} · auto` });
+    logDecision(variant === 'no-coverage'
+      ? { kind: 'decision', title: 'You approved without WorkFlex coverage', body: `Reason: ${reason}\n${checksLine}`, time: '', source: 'Work entitlement: high risk, business visa not issued (WE_TH_03)' }
+      : { kind: 'decision', title: 'You approved without a verified A1 certificate', body: `Reason: ${reason}\n${checksLine}`, time: '', source: 'Social security: A1 not verified with the issuer (BT_WE_12)' });
+    showToast(variant === 'no-coverage' ? `Approved without coverage. ${firstName} and Tom were notified.` : `Request approved. ${firstName} and Tom were notified.`, () => {
       setApproved(false);
       setNoCoverage(false);
-      log({ kind: 'decision', title: 'You undid the approval', time: `Today, ${now()}` });
+      log({ kind: 'decision', title: 'You undid the approval', body: 'The decision and its snapshot stay in the log.', time: `Today, ${now()}` });
+    });
+  }
+  function sendToGlobalMobility() {
+    setSentToGM(true);
+    log({ kind: 'decision', title: 'You sent the request to Global Mobility', body: 'Approving past a rule needs Global Mobility. They get the request with its current risk and sources.', time: `Today, ${now()}`, source: 'Permission: only Global Mobility can approve past a rule' });
+    showToast('Sent to Global Mobility.', () => {
+      setSentToGM(false);
+      log({ kind: 'decision', title: 'You took the request back from Global Mobility', time: `Today, ${now()}` });
     });
   }
 
-  function approve(reason?: string) {
+  function approve() {
     setApproved(true);
-    log({ kind: 'decision', title: 'You approved the request', body: reason ? `Reason: ${reason}` : undefined, time: `Today, ${now()}` });
+    logDecision({ kind: 'decision', title: 'You approved the request', time: '' });
     showToast(`Request approved. ${firstName} and Tom were notified.`, () => {
       setApproved(false);
-      log({ kind: 'decision', title: 'You undid the approval', time: `Today, ${now()}` });
+      log({ kind: 'decision', title: 'You undid the approval', body: 'The decision and its snapshot stay in the log.', time: `Today, ${now()}` });
     });
   }
 
@@ -459,8 +493,10 @@ export default function Page() {
                           <div className="act-text">
                             <div className="act-top">
                               {(a.kind === 'agent' || a.kind === 'agent-failed') && <span className="agent-chip">Agent</span>}
-                              <span className="t-label-m" style={undone[a.id] ? { textDecoration: 'line-through' } : undefined}>{a.title}</span>
+                              <span className="t-label-m">{a.title}</span>
+                              {a.snapshot && <span className="locked-chip">Locked</span>}
                               <span className="t-caption c-muted">{a.time}</span>
+                              {/* Undo never edits the original: it adds a new entry */}
                               {a.undoable && !undone[a.id] && (
                                 <button className="link-btn t-label-s" onClick={() => { setUndone((u) => ({ ...u, [a.id]: true })); log({ kind: 'decision', title: 'You undid an agent action', body: a.title, time: `Today, ${now()}` }); }}>Undo</button>
                               )}
@@ -468,7 +504,8 @@ export default function Page() {
                                 <button className="link-btn t-label-s" onClick={() => { setScenario('ready'); showToast('Agent is trying again.'); }}>Try again</button>
                               )}
                             </div>
-                            {a.body && <p className="c-secondary">{undone[a.id] ? 'Undone by you.' : a.body}</p>}
+                            {a.body && <p className="c-secondary" style={{ whiteSpace: 'pre-line' }}>{a.body}</p>}
+                            {a.snapshot && <ul className="snapshot t-caption c-secondary">{a.snapshot.map((l) => <li key={l}>{l}</li>)}</ul>}
                             {a.source && <p className="t-caption c-muted">Sources: {a.source}</p>}
                           </div>
                         </li>
@@ -528,14 +565,22 @@ export default function Page() {
                     ) : canApproveWithoutCoverage ? (
                       <div className="actions stacked">
                         <button className="btn btn-secondary btn-block" onClick={() => openDraft('reject')}><Icon name="close" /> Reject</button>
-                        <button className="btn btn-ghost btn-block" onClick={openNoCoverage}>Approve without coverage</button>
-                        <p className="t-caption c-danger">Approving now means WorkFlex won&apos;t cover this trip until the visa is issued.</p>
+                        {role === 'gm' ? (
+                          <button className="btn btn-ghost btn-block" onClick={() => openOverride('no-coverage')}>Approve without coverage</button>
+                        ) : (
+                          <button className="btn btn-ghost btn-block" disabled={sentToGM} onClick={sendToGlobalMobility}>{sentToGM ? 'Sent to Global Mobility' : 'Send to Global Mobility'}</button>
+                        )}
+                        <p className="t-caption c-danger">{role === 'gm' ? 'Approving now means WorkFlex won’t cover this trip until the visa is issued.' : 'Only Global Mobility can approve without WorkFlex coverage.'}</p>
                       </div>
                     ) : (
                       <div className="actions">
-                        <button className="btn btn-primary btn-block" disabled={!approvable} aria-describedby={!approvable ? 'why-locked' : undefined} onClick={() => (needsYou ? openDraft('approve-anyway') : approve())}>
-                          <Icon name="check" /> {needsYou ? 'Approve anyway' : 'Approve'}
-                        </button>
+                        {needsYou && approvable && role === 'hr' ? (
+                          <button className="btn btn-secondary btn-block" disabled={sentToGM} onClick={sendToGlobalMobility}>{sentToGM ? 'Sent to Global Mobility' : 'Send to Global Mobility'}</button>
+                        ) : (
+                          <button className="btn btn-primary btn-block" disabled={!approvable} aria-describedby={!approvable ? 'why-locked' : undefined} onClick={() => (needsYou ? openOverride('approve-anyway') : approve())}>
+                            <Icon name="check" /> {needsYou ? 'Approve anyway' : 'Approve'}
+                          </button>
+                        )}
                         <button className="btn btn-secondary btn-block" onClick={() => openDraft('reject')}><Icon name="close" /> Reject</button>
                         <p id="why-locked" className="t-caption c-muted">
                           {!approvable ? (pastDates ? 'Approving is paused until the dates are confirmed or corrected.' : blocking ? 'Approve is paused until the data is fixed.' : 'Approve unlocks when every step is done.') : `Rejecting asks for a reason. ${firstName} and their manager see it.`}
@@ -609,29 +654,40 @@ export default function Page() {
                 </div>
               </>
             );
-          })() : dialog.kind === 'no-coverage' ? (
-            <>
-              <h2 id="dlg-title" className="t-heading-m" style={{ margin: 0 }}>Approve without WorkFlex coverage?</h2>
-              <p className="c-secondary">{firstName}&apos;s visa isn&apos;t issued yet. If you approve now, WorkFlex won&apos;t cover this trip for work entitlement until it is.</p>
-              <div className="changes">
-                <p className="t-overline">What changes</p>
-                <p>Liability for work entitlement stays with your company</p>
-                <p>{firstName} and Tom are told the trip is approved</p>
-                <p>The agent keeps chasing the visa</p>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <label htmlFor="dlg-text" className="t-caption c-secondary" style={{ flex: 1 }}>Reason (required, saved to the audit log)</label>
-                <button className="link-btn t-caption" onClick={draftNoCoverage} disabled={dialog.streaming} style={{ display: 'inline-flex', gap: 4, alignItems: 'center', color: 'var(--color-agent-fg)' }}><Icon name="sparkle" size={12} /> Draft reason</button>
-              </div>
-              {dialog.streaming && <div className="draft-note"><Icon name="sparkle" size={14} />The agent is drafting…</div>}
-              <textarea id="dlg-text" autoFocus value={dialog.text} onChange={(e) => setDialog({ ...dialog, text: e.target.value, streaming: false })} />
-              {/\[.*\]/.test(dialog.text) && <p className="t-caption c-muted">Replace the part in [brackets] to continue.</p>}
-              <div className="dialog-actions">
-                <button className="btn btn-secondary" onClick={closeDialog}>Cancel</button>
-                <button className="btn btn-danger" disabled={!dialog.text.trim() || dialog.streaming || /\[.*\]/.test(dialog.text)} onClick={() => approveWithoutCoverage(dialog.text.trim())}>Approve without coverage</button>
-              </div>
-            </>
-          ) : dialog.kind === 'cancel' ? (
+          })() : dialog.kind === 'override' ? (() => {
+            const nc = dialog.variant === 'no-coverage';
+            const items = OVERRIDE_CHECKS[dialog.variant](firstName);
+            return (
+              <>
+                <h2 id="dlg-title" className="t-heading-m" style={{ margin: 0 }}>{nc ? 'Approve without WorkFlex coverage?' : 'Approve without a verified A1 certificate?'}</h2>
+                <p className="c-secondary">{nc ? `${firstName}'s visa isn't issued yet. If you approve now, WorkFlex won't cover this trip for work entitlement until it is.` : "The agent couldn't reach the issuer, so the A1 certificate isn't verified. You approve on your own checks."}</p>
+                {nc && (
+                  <div className="changes">
+                    <p className="t-overline">What changes</p>
+                    <p>Liability for work entitlement stays with your company</p>
+                    <p>{firstName} and Tom are told the trip is approved</p>
+                    <p>The agent keeps chasing the visa</p>
+                  </div>
+                )}
+                <fieldset className="checks">
+                  <legend className="t-caption c-secondary">Before you approve, check <span style={{ color: 'var(--color-agent-fg)' }}>(suggested by the agent)</span></legend>
+                  {items.map((it, i) => (
+                    <label key={it} className="check-row">
+                      <input type="checkbox" checked={dialog.checked[i]} onChange={(e) => setDialog({ ...dialog, checked: dialog.checked.map((c, j) => (j === i ? e.target.checked : c)) })} />
+                      <span>{it}</span>
+                    </label>
+                  ))}
+                </fieldset>
+                <label htmlFor="dlg-text" className="t-caption c-secondary">Your reason (required, written by you, saved to the audit log)</label>
+                <textarea id="dlg-text" autoFocus value={dialog.text} placeholder={nc ? 'Why is it safe to approve before the visa is issued?' : 'What did you check yourself, and with whom?'} onChange={(e) => setDialog({ ...dialog, text: e.target.value })} />
+                <p className="t-caption c-muted">The agent never drafts override reasons.</p>
+                <div className="dialog-actions">
+                  <button className="btn btn-secondary" onClick={closeDialog}>Cancel</button>
+                  <button className={`btn ${nc ? 'btn-danger' : 'btn-primary'}`} disabled={!dialog.text.trim()} onClick={() => confirmOverride(dialog.variant, dialog.text.trim(), dialog.checked)}>{nc ? 'Approve without coverage' : 'Approve anyway'}</button>
+                </div>
+              </>
+            );
+          })() : dialog.kind === 'cancel' ? (
             <>
               <h2 id="dlg-title" className="t-heading-m" style={{ margin: 0 }}>Cancel {firstName}&apos;s request?</h2>
               <p className="c-secondary">{firstName} and Tom are notified. The approvals already given are kept in Activity. This can&apos;t be undone.</p>
@@ -643,10 +699,10 @@ export default function Page() {
           ) : (
             <>
               <h2 id="dlg-title" className="t-heading-m" style={{ margin: 0 }}>
-                {dialog.kind === 'reject' ? `Reject ${firstName}'s Workation?` : dialog.kind === 'message' ? `Message ${firstName}` : dialog.kind === 'reminder' ? 'Send reminder to Anna Roth?' : 'Approve without a verified A1 certificate?'}
+                {dialog.kind === 'reject' ? `Reject ${firstName}'s Workation?` : dialog.kind === 'message' ? `Message ${firstName}` : 'Send reminder to Anna Roth?'}
               </h2>
               <p className="c-secondary">
-                {dialog.kind === 'reject' ? `${firstName} and Tom get your reason by email. ${firstName} can submit a new request.` : dialog.kind === 'reminder' ? 'Your settings say to ask before messaging approvers. To: Anna Roth, IT security.' : dialog.kind === 'message' ? `${firstName} gets this by email. The message is saved in Activity.` : "The agent couldn't reach the issuer. Say what you checked yourself. It goes into the audit log."}
+                {dialog.kind === 'reject' ? `${firstName} and Tom get your reason by email. ${firstName} can submit a new request.` : dialog.kind === 'reminder' ? 'Your settings say to ask before messaging approvers. To: Anna Roth, IT security.' : `${firstName} gets this by email. The message is saved in Activity.`}
               </p>
               <div className="draft-note"><Icon name="sparkle" size={14} />{dialog.streaming ? 'The agent is drafting…' : 'Draft by the agent. Edit before sending.'}
                 <button className="link-btn t-caption" style={{ marginLeft: 'auto' }} onClick={() => setDialog({ ...dialog, text: '', streaming: false })}>Clear draft</button>
@@ -664,7 +720,7 @@ export default function Page() {
               <div className="dialog-actions">
                 <button className="btn btn-secondary" onClick={closeDialog}>{dialog.kind === 'reject' ? 'Keep request' : dialog.kind === 'reminder' ? 'Don’t send' : 'Go back'}</button>
                 {dialog.kind === 'reject' && (
-                  <button className="btn btn-danger" disabled={!dialog.text.trim() || dialog.streaming} onClick={() => { closeDialog(); log({ kind: 'decision', title: 'You rejected the request', body: dialog.text, time: `Today, ${now()}` }); showToast(`Request rejected. ${firstName} and Tom were notified.`); }}>Reject request</button>
+                  <button className="btn btn-danger" disabled={!dialog.text.trim() || dialog.streaming} onClick={() => { closeDialog(); logDecision({ kind: 'decision', title: 'You rejected the request', body: dialog.text, time: '' }); showToast(`Request rejected. ${firstName} and Tom were notified.`); }}>Reject request</button>
                 )}
                 {dialog.kind === 'reminder' && (
                   <button className="btn btn-primary" disabled={!dialog.text.trim() || dialog.streaming} onClick={() => { closeDialog(); log({ kind: 'comment', title: 'You sent the agent’s reminder to Anna Roth', body: dialog.text, time: `Today, ${now()}`, source: 'Rule: remind approvers after 2 days (Ask me)' }); showToast('Reminder sent to Anna Roth.'); }}><Icon name="send" /> Send reminder</button>
@@ -672,11 +728,7 @@ export default function Page() {
                 {dialog.kind === 'message' && (
                   <button className="btn btn-primary" disabled={!dialog.text.trim() || dialog.streaming} onClick={() => { closeDialog(); log({ kind: 'comment', title: `You messaged ${firstName}`, body: dialog.text, time: `Today, ${now()}` }); showToast('Message sent.'); }}><Icon name="send" /> Send</button>
                 )}
-                {dialog.kind === 'approve-anyway' && (
-                  <button className="btn btn-primary" disabled={!dialog.text.trim() || dialog.streaming || /\[.*\]/.test(dialog.text)} onClick={() => { closeDialog(); approve(dialog.text); }}>Approve anyway</button>
-                )}
               </div>
-              {dialog.kind === 'approve-anyway' && /\[.*\]/.test(dialog.text) && <p className="t-caption c-muted">Replace the part in [brackets] to continue.</p>}
             </>
           )}
         </Dialog>
@@ -692,6 +744,13 @@ export default function Page() {
       <header className="cs-bar">
         <span className="t-caption cs-note">Case study concept by Debora Moratalla · Not a WorkFlex product · Sample data</span>
         <span className="t-caption c-muted cs-hint">{ORDER.length} requests need you · ‹ › or J K to move</span>
+        <label className="cs-role t-caption">
+          <span className="c-muted">Viewing as</span>
+          <select value={role} onChange={(e) => setRole(e.target.value as Role)}>
+            <option value="gm">Global Mobility</option>
+            <option value="hr">HR approver</option>
+          </select>
+        </label>
         <button className="btn btn-secondary cs-tour" onClick={() => goTour(tourResume.current)}><Icon name="book" /> Walkthrough</button>
       </header>
       {tour !== null && <Tour step={tour} onStep={goTour} onClose={closeTour} onTry={tryQuestion} />}
