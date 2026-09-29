@@ -124,7 +124,7 @@ export const scenarios: Record<ScenarioId, { label: string; build: () => Workati
     label: 'Data conflict',
     build: () => {
       const r = clone(base);
-      r.dates = { start: '2024-05-04', end: '2024-05-08', label: '4 to 8 May 2024' };
+      r.dates = { start: '2024-05-06', end: '2024-05-10', label: '6 to 10 May 2024' };
       return as(r, 'Mara Klein', 'W-ZK40RB');
     },
   },
