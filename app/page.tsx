@@ -274,7 +274,8 @@ export default function Page() {
   type Banner = { title: string; detail: string; action: string; by: string; kind: 'dates' | 'rule' | 'info' | 'agent' };
   const tripYear = Number(req.dates.start.slice(0, 4));
   const banners: Banner[] = [
-    ...(assess.status === 'loading' ? [] : checks.filter((c) => !(pastDates && c.id === 'year-mismatch')).map((c): Banner => c.id === 'past-dates'
+    // Rules are deterministic: show them at once, even while the agent is still checking
+    ...(checks.filter((c) => !(pastDates && c.id === 'year-mismatch')).map((c): Banner => c.id === 'past-dates'
       ? { title: 'These dates are in the past', detail: `The trip was ${req.dates.label}, but the request was created on ${formatDay(req.submitted)}. The risk check and day balance use these dates, so check them with ${firstName} before deciding.`, action: '', by: 'Flagged by rules', kind: 'dates' }
       : { title: c.title, detail: c.detail, action: '', by: 'Flagged by rules', kind: 'rule' })),
     ...(ed.confirmed?.includes('past-dates') && tripYear !== Number(req.today.slice(0, 4)) ? [{ title: `Balance shown for ${tripYear}`, detail: 'Showing the year of the trip, not the current year.', action: '', by: 'Flagged by rules', kind: 'info' as const }] : []),
