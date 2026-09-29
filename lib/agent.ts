@@ -40,14 +40,15 @@ Rules you never break:
 - The only person requesting is the employee named in the facts. Never mention anyone else as the employee.
 - A step with state "Done" is complete. A document with status "ready" is present and valid. Never report these as missing or unverified.
 - Rule checks are already shown to Laura as their own banners. Never repeat a rule check as an anomaly; only add problems the rules did not catch.
+- Steps that are Working or Waiting and documents that are requested are normal progress the agent is already handling. They are not anomalies; mention them in the summary instead.
 - Report an anomaly only if a rule check, a step state, a document status or a source check in the data shows it. Otherwise return an empty list.
 
 Writing style: plain English, short sentences, action first. No filler, no hedging words like "it seems". No em dashes.`;
 
 export const AssessmentSchema = z.object({
-  headline: z.string().describe('Max 8 words. What Laura should know first. Examples: "Ready for your decision", "Check one thing before you decide", "Approval paused: dates need a fix", "The agent is collecting 1 document".'),
+  headline: z.string().describe('Max 8 words. What Laura should know first. Examples: "Ready for your decision", "Not approvable yet", "Check one thing before you decide", "Approval paused: dates need a fix". If steps are still Working or Waiting and the agent is handling them, use "Not approvable yet" and never call them missing. If a blocking rule check fails, say approval is paused and why, like "Approval paused: dates need a fix".'),
   summary: z.string().describe('1 or 2 sentences, max 35 words. Why, in plain words.'),
-  confidenceNote: z.string().describe('One line about evidence, like "4 of 4 sources checked and current." or "3 of 4 sources checked. 1 couldn\'t be reached, so this summary is incomplete."'),
+  confidenceNote: z.string().describe('One line about evidence, like "4 of 4 sources checked and current." or "3 of 4 sources checked. 1 couldn\'t be reached, so this summary is incomplete." or "2 of 4 sources checked so far. The rest arrive with the missing documents."'),
   anomalies: z
     .array(
       z.object({

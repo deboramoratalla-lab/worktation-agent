@@ -9,10 +9,11 @@ import { Tour, TOUR } from '@/components/Tour';
 const ORDER: ScenarioId[] = ['ready', 'working', 'check', 'conflict'];
 const rank: Record<Level, number> = { Low: 0, Medium: 1, High: 2 };
 
-type AssessState = { status: 'loading' } | { status: 'ok'; data: Assessment; model: string } | { status: 'error' };
+type AssessState = { status: 'loading' } | { status: 'ok'; data: Assessment; model: string; at: string } | { status: 'error' };
 type DialogState =
   | null
-  | { kind: 'reject' | 'message' | 'approve-anyway'; text: string; streaming: boolean }
+  | { kind: 'reject' | 'message' | 'approve-anyway' | 'reminder'; text: string; streaming: boolean; reason?: string }
+  | { kind: 'settings' }
   | { kind: 'cancel' };
 
 async function streamText(url: string, body: object, onChunk: (full: string) => void, signal?: AbortSignal) {
@@ -75,7 +76,7 @@ export default function Page() {
 
   // Only the latest request may write. A slow answer for another request is dropped.
   const assessRun = useRef(0);
-  const assessCache = useRef<Partial<Record<ScenarioId, { data: Assessment; model: string }>>>({});
+  const assessCache = useRef<Partial<Record<ScenarioId, { data: Assessment; model: string; at: string }>>>({});
   const runAssessment = useCallback(async (id: ScenarioId, force = false) => {
     const run = ++assessRun.current;
     const cached = assessCache.current[id];
@@ -89,8 +90,8 @@ export default function Page() {
       const json = await res.json();
       if (run !== assessRun.current) return;
       if (!res.ok) throw new Error(json.error);
-      assessCache.current[id] = { data: json.assessment, model: json.model };
-      setAssess({ status: 'ok', data: json.assessment, model: json.model });
+      assessCache.current[id] = { data: json.assessment, model: json.model, at: json.at };
+      setAssess({ status: 'ok', data: json.assessment, model: json.model, at: json.at });
       log({ kind: 'agent', title: 'Agent checked the request', body: json.assessment.summary, time: `Today, ${now()} · auto`, source: json.assessment.sources.join(', ') });
     } catch {
       if (run !== assessRun.current) return;
@@ -98,6 +99,22 @@ export default function Page() {
       log({ kind: 'agent-failed', title: "Agent couldn't run the check", body: 'The summary below is missing. Rules still decide if Approve is available.', time: `Today, ${now()} · auto` });
     }
   }, [log]);
+
+  // When the walkthrough starts, fetch the other requests' assessments in the background,
+  // so each step shows the finished answer instead of loading and then shifting.
+  const prefetched = useRef(false);
+  useEffect(() => {
+    if (tour === null || prefetched.current) return;
+    prefetched.current = true;
+    const ids = [...new Set(TOUR.map((t) => t.scenario))].filter((id) => id !== scenario && !assessCache.current[id]);
+    ids.forEach((id, i) => setTimeout(async () => {
+      try {
+        const res = await fetch('/api/assess', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scenario: id }) });
+        const json = await res.json();
+        if (res.ok && !assessCache.current[id]) assessCache.current[id] = { data: json.assessment, model: json.model, at: json.at };
+      } catch { /* the step will load it normally */ }
+    }, 300 * (i + 1)));
+  }, [tour, scenario]);
 
   // Reset on scenario change
   useEffect(() => {
@@ -137,15 +154,15 @@ export default function Page() {
 
   // ----- Dialog helpers -----
   const abortRef = useRef<AbortController | null>(null);
-  function openDraft(kind: 'reject' | 'message' | 'approve-anyway') {
+  function openDraft(kind: 'reject' | 'message' | 'approve-anyway' | 'reminder', reason?: string) {
     lastFocus.current = document.activeElement as HTMLElement;
     setMenu(false);
-    setDialog({ kind, text: '', streaming: true });
+    setDialog({ kind, text: '', streaming: true, reason });
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     const apiKind = kind === 'approve-anyway' ? 'approve-note' : kind;
-    streamText('/api/draft', { scenario, kind: apiKind }, (full) => setDialog((d) => (d && 'text' in d ? { ...d, text: full } : d)), ctrl.signal)
+    streamText('/api/draft', { scenario, kind: apiKind, reason }, (full) => setDialog((d) => (d && 'text' in d ? { ...d, text: full } : d)), ctrl.signal)
       .then(() => setDialog((d) => (d && 'text' in d ? { ...d, streaming: false } : d)))
       .catch(() => setDialog((d) => (d && 'text' in d ? { ...d, streaming: false, text: d.text || '' } : d)));
   }
@@ -277,8 +294,8 @@ export default function Page() {
                         <p className="t-heading-s">{b.title}</p>
                         <p className="c-secondary">{b.detail}{b.action ? ` ${b.action}.` : ''}</p>
                         <div className="alert-actions">
-                          <button className="btn btn-secondary" onClick={() => openDraft('message')}><Icon name="message" /> Ask {firstName} to confirm</button>
-                          <span className="t-caption" style={{ color: 'var(--color-agent-fg)' }}>{b.by}</span>
+                          {b.by === 'Flagged by rules' && <button className="btn btn-secondary" onClick={() => openDraft('message')}><Icon name="message" /> Ask {firstName} to confirm</button>}
+                          <span className="t-caption" style={{ color: b.by.includes('agent') ? 'var(--color-agent-fg)' : 'var(--color-text-muted)' }}>{b.by}</span>
                           <button className="link-btn t-caption" onClick={() => { setDismissed((d) => ({ ...d, [b.i]: true })); log({ kind: 'decision', title: `You dismissed a flag: ${b.title}`, time: `Today, ${now()}` }); }}>Dismiss</button>
                         </div>
                       </div>
@@ -399,11 +416,11 @@ export default function Page() {
                         <>
                           <p className="t-heading-m">{assess.data.headline}</p>
                           <p className="c-secondary">{assess.data.summary}</p>
-                          <p className={`conf ${needsYou || !approvable ? 'warn' : ''}`}>{needsYou || !approvable ? '! ' : '✓ '}{assess.data.confidenceNote}</p>
+                          <p className={`conf ${needsYou || !approvable ? 'warn' : ''}`}>{needsYou || !approvable ? '! ' : '✓ '}{assess.data.confidenceNote} Last check today, {new Date(assess.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}.</p>
                           <div className="src-line">
                             <span>Summary by the agent</span><span aria-hidden="true">·</span>
                             <button className="link-btn" onClick={() => showToast(`Sources: ${assess.data.sources.join(', ')}`)}>Sources</button><span aria-hidden="true">·</span>
-                            <span>{assess.model}</span>
+                            <button className="link-btn" onClick={() => { lastFocus.current = document.activeElement as HTMLElement; setDialog({ kind: 'settings' }); }}>Agent settings</button>
                           </div>
                         </>
                       )}
@@ -412,7 +429,7 @@ export default function Page() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <div className="t-overline c-secondary" style={{ display: 'flex' }}><span style={{ flex: 1 }}>Path to approval</span><span className="t-label-s" style={{ textTransform: 'none', letterSpacing: 0 }}>{done} of {req.steps.length} done</span></div>
                       <div className="progress"><i style={{ width: `${(done / req.steps.length) * 100}%` }} /></div>
-                      <ol className="steps">{req.steps.map((s) => <PathStep key={s.id} step={s} />)}</ol>
+                      <ol className="steps">{req.steps.map((s) => <PathStep key={s.id} step={s} onReview={() => openDraft('reminder')} />)}</ol>
                     </div>
 
                     <Days req={req} blocked={checks.some((c) => c.id === 'year-mismatch')} />
@@ -455,7 +472,19 @@ export default function Page() {
 
       {dialog && (
         <Dialog onClose={closeDialog}>
-          {dialog.kind === 'cancel' ? (
+          {dialog.kind === 'settings' ? (
+            <>
+              <h2 id="dlg-title" className="t-heading-m" style={{ margin: 0 }}>Agent settings</h2>
+              <p className="c-secondary">What the agent does on its own for Workation requests. Set by your company admin.</p>
+              <ul className="settings-list">
+                {([['Ask for missing documents', 'Auto'], ['Remind approvers after 2 days', 'Ask me'], ['Re-run the risk check when data changes', 'Auto'], ['Message the employee or manager', 'Ask me'], ['Approve, reject or cancel', 'Only you']] as const).map(([a, l]) => (
+                  <li key={a}><span>{a}</span><span className={`level ${l.replace(' ', '-')}`}>{l}</span></li>
+                ))}
+              </ul>
+              <p className="t-caption c-muted">Every agent action is logged in Activity with the setting that allowed it.</p>
+              <div className="dialog-actions"><button className="btn btn-secondary" autoFocus onClick={closeDialog}>Close</button></div>
+            </>
+          ) : dialog.kind === 'cancel' ? (
             <>
               <h2 id="dlg-title" className="t-heading-m" style={{ margin: 0 }}>Cancel {firstName}&apos;s request?</h2>
               <p className="c-secondary">{firstName} and Tom are notified. The approvals already given are kept in Activity. This can&apos;t be undone.</p>
@@ -467,20 +496,31 @@ export default function Page() {
           ) : (
             <>
               <h2 id="dlg-title" className="t-heading-m" style={{ margin: 0 }}>
-                {dialog.kind === 'reject' ? `Reject ${firstName}'s Workation?` : dialog.kind === 'message' ? `Message ${firstName}` : 'Approve without a verified A1 certificate?'}
+                {dialog.kind === 'reject' ? `Reject ${firstName}'s Workation?` : dialog.kind === 'message' ? `Message ${firstName}` : dialog.kind === 'reminder' ? 'Send reminder to Anna Roth?' : 'Approve without a verified A1 certificate?'}
               </h2>
               <p className="c-secondary">
-                {dialog.kind === 'reject' ? `${firstName} and Tom get your reason by email.` : dialog.kind === 'message' ? `${firstName} gets this by email. The message is saved in Activity.` : "The agent couldn't reach the issuer. Say what you checked yourself. It goes into the audit log."}
+                {dialog.kind === 'reject' ? `${firstName} and Tom get your reason by email. ${firstName} can submit a new request.` : dialog.kind === 'reminder' ? 'Your settings say to ask before messaging approvers. To: Anna Roth, IT security.' : dialog.kind === 'message' ? `${firstName} gets this by email. The message is saved in Activity.` : "The agent couldn't reach the issuer. Say what you checked yourself. It goes into the audit log."}
               </p>
               <div className="draft-note"><Icon name="sparkle" size={14} />{dialog.streaming ? 'The agent is drafting…' : 'Draft by the agent. Edit before sending.'}
                 <button className="link-btn t-caption" style={{ marginLeft: 'auto' }} onClick={() => setDialog({ ...dialog, text: '', streaming: false })}>Clear draft</button>
               </div>
+              {dialog.kind === 'reject' && (
+                <div className="reason-chips" role="radiogroup" aria-label="Reason">
+                  {['Visa not possible in time', 'Against company policy', 'Dates overlap another trip', 'Other'].map((r) => (
+                    <button key={r} role="radio" aria-checked={dialog.reason === r} className="reason-chip" onClick={() => openDraft('reject', r)}>{r}</button>
+                  ))}
+                </div>
+              )}
+              {dialog.kind === 'reminder' && <p className="t-caption c-muted">Why now: no reply for 3 days. Based on your rule “remind approvers after 2 days”.</p>}
               <label htmlFor="dlg-text" className="sr-only">Message</label>
               <textarea id="dlg-text" autoFocus value={dialog.text} onChange={(e) => setDialog({ ...dialog, text: e.target.value, streaming: false })} />
               <div className="dialog-actions">
-                <button className="btn btn-secondary" onClick={closeDialog}>{dialog.kind === 'reject' ? 'Keep request' : 'Go back'}</button>
+                <button className="btn btn-secondary" onClick={closeDialog}>{dialog.kind === 'reject' ? 'Keep request' : dialog.kind === 'reminder' ? 'Don’t send' : 'Go back'}</button>
                 {dialog.kind === 'reject' && (
                   <button className="btn btn-danger" disabled={!dialog.text.trim() || dialog.streaming} onClick={() => { closeDialog(); log({ kind: 'decision', title: 'You rejected the request', body: dialog.text, time: `Today, ${now()}` }); showToast(`Request rejected. ${firstName} and Tom were notified.`); }}>Reject request</button>
+                )}
+                {dialog.kind === 'reminder' && (
+                  <button className="btn btn-primary" disabled={!dialog.text.trim() || dialog.streaming} onClick={() => { closeDialog(); log({ kind: 'comment', title: 'You sent the agent’s reminder to Anna Roth', body: dialog.text, time: `Today, ${now()}`, source: 'Rule: remind approvers after 2 days (Ask me)' }); showToast('Reminder sent to Anna Roth.'); }}><Icon name="send" /> Send reminder</button>
                 )}
                 {dialog.kind === 'message' && (
                   <button className="btn btn-primary" disabled={!dialog.text.trim() || dialog.streaming} onClick={() => { closeDialog(); log({ kind: 'comment', title: `You messaged ${firstName}`, body: dialog.text, time: `Today, ${now()}` }); showToast('Message sent.'); }}><Icon name="send" /> Send</button>
@@ -505,7 +545,7 @@ export default function Page() {
       <header className="cs-bar">
         <span className="t-caption cs-note">Case study concept by Debora Moratalla · Not a WorkFlex product · Sample data</span>
         <span className="t-caption c-muted cs-hint">{ORDER.length} requests need you · ‹ › or J K to move</span>
-        <button className="btn btn-secondary cs-tour" onClick={() => goTour(tourResume.current)}><Icon name="sparkle" /> Walkthrough</button>
+        <button className="btn btn-secondary cs-tour" onClick={() => goTour(tourResume.current)}><Icon name="book" /> Walkthrough</button>
       </header>
       {tour !== null && <Tour step={tour} onStep={goTour} onClose={closeTour} onTry={tryQuestion} />}
     </>
@@ -540,7 +580,7 @@ function RiskBadge({ level }: { level: Level }) {
   return <span className={`badge ${level}`}><ShieldSolid /> {level} risk</span>;
 }
 
-function PathStep({ step }: { step: Step }) {
+function PathStep({ step, onReview }: { step: Step; onReview?: () => void }) {
   const cls = step.state === 'Needs you' ? 'Needs' : step.state;
   const icon: Partial<Record<Step['state'], IconName>> = { Done: 'check', 'Needs you': 'alert', Blocked: 'close', Waiting: 'clock' };
   return (
@@ -552,6 +592,9 @@ function PathStep({ step }: { step: Step }) {
           <span className={`owner ${step.owner}`}>{step.owner}</span>
         </div>
         <span className="t-caption c-secondary">{step.meta}</span>
+        {step.state === 'Waiting' && step.owner === 'Approver' && onReview && (
+          <button className="agent-proposal" onClick={onReview}><span className="agent-chip">Agent</span> Drafted a reminder · <span className="c-link">Review</span></button>
+        )}
         <span className="sr-only">Status: {step.state}</span>
       </div>
     </li>

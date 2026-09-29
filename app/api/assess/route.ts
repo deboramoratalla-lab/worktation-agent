@@ -28,7 +28,9 @@ export async function POST(req: Request) {
       prompt: `Assess this Workation request for Laura's decision panel. Today is ${r.today}.\n\n${requestContext(r)}`,
       temperature: 0.2,
     });
-    object.anomalies = dedupe(object.anomalies, ruleChecks(r));
+    // Steps the agent is already working on are progress, not anomalies
+    const inProgress = [...r.steps.filter((x) => x.state === 'Working' || x.state === 'Waiting').map((x) => ({ title: x.title })), ...r.documents.filter((d) => d.status === 'requested').map((d) => ({ title: d.name }))];
+    object.anomalies = dedupe(dedupe(object.anomalies, ruleChecks(r)), inProgress);
     const at = new Date().toISOString();
     cache.set(key, { assessment: object, at });
     return Response.json({ assessment: object, checks: ruleChecks(r), approveAvailable: canApprove(r), model: MODEL, at });

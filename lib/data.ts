@@ -97,10 +97,10 @@ export const scenarios: Record<ScenarioId, { label: string; build: () => Workati
     label: 'Agent working',
     build: () => {
       const r = clone(base);
-      r.today = '2026-04-01';
+      r.today = '2026-04-03';
       r.risks[1] = { ...r.risks[1], level: 'High', why: 'No business visa yet. Remote work on a tourist entry is not allowed in Thailand.' };
       r.steps[1] = { ...r.steps[1], owner: 'Agent', state: 'Working', meta: 'Agent asked Lili · 1 Apr' };
-      r.steps[3] = { ...r.steps[3], state: 'Waiting', meta: 'Anna Roth · reminder in 1 day' };
+      r.steps[3] = { ...r.steps[3], state: 'Waiting', meta: 'Anna Roth · no reply since 31 Mar' };
       r.documents[0] = { ...r.documents[0], meta: 'Requested by the agent · 1 Apr', status: 'requested' };
       r.activity = r.activity.filter((a) => !['a-recheck', 'a-it'].includes(a.id));
       r.sourceChecks[1].status = 'missing';
