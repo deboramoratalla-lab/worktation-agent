@@ -807,11 +807,7 @@ const SETTING_GROUPS: { title: string; note: string; rows: [string, string, Leve
   ] },
 ];
 
-const SETTINGS_NAV: [string, string[]][] = [
-  ['Company', ['General', 'Users and roles', 'Billing']],
-  ['Workations', ['Policy rules', 'Countries and tax', 'Approval flow', 'Agent', 'Notifications']],
-  ['Security', ['Audit log', 'Integrations', 'Single sign-on']],
-];
+const SETTINGS_TABS = ['General', 'Users and roles', 'Workation policy', 'Agent', 'Notifications', 'Audit log', 'Integrations'];
 
 function AgentSettings({ onBack, onSaved }: { onBack: () => void; onSaved: (m: string) => void }) {
   const initial = Object.fromEntries(SETTING_GROUPS.flatMap((g) => g.rows.map(([n, , l]) => [n, l]))) as Record<string, Level3>;
@@ -822,15 +818,11 @@ function AgentSettings({ onBack, onSaved }: { onBack: () => void; onSaved: (m: s
     <main className="list settings-page">
       <p className="t-heading-l">Company settings</p>
       <div className="sp-shell">
-        <nav className="sp-nav" aria-label="Company settings">
-          {SETTINGS_NAV.map(([group, items]) => (
-            <div key={group} className="sp-navgroup">
-              <div className="nav-title t-label-s">{group}</div>
-              {items.map((i) => i === 'Agent'
-                ? <a key={i} href="#" className="nav-item t-label-m active" aria-current="page" onClick={(e) => e.preventDefault()}>{i}</a>
-                : <a key={i} href="#" className="nav-item t-label-m" onClick={(e) => { e.preventDefault(); onSaved('Not part of this case study. Only Agent settings is designed.'); }}>{i}</a>)}
-            </div>
-          ))}
+        <nav className="sp-tabs t-label-m" aria-label="Company settings">
+          {SETTINGS_TABS.map((i) => i === 'Agent'
+            ? <a key={i} href="#" className="sp-tab active" aria-current="page" onClick={(e) => e.preventDefault()}>{i}</a>
+            : <a key={i} href="#" className="sp-tab" onClick={(e) => { e.preventDefault(); onSaved('Not part of this case study. Only Agent settings is designed.'); }}>{i}</a>)}
+          <span className="t-caption c-secondary sp-tabsnote">Other tabs not designed. Structure assumed.</span>
         </nav>
         <div className="sp-content">
       <p className="t-caption c-secondary">Company settings / Workations / Agent</p>
