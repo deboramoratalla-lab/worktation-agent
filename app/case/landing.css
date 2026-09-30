@@ -150,3 +150,6 @@ html { scroll-behavior: smooth; scroll-padding-top: 72px; }
 @media (max-width: 680px) { .lp-sec { padding: 64px 0; } .lp-grid3, .lp-facts, .lp-rules { grid-template-columns: 1fr; } .lp-mini { grid-template-columns: repeat(2, 1fr); } .lp-box { padding: 20px; border-radius: 16px; } .lp-link { display: none; } .lp-nav-in { gap: 12px; } .lp-hero { padding-top: 40px; } .lp-strip { padding: 24px 20px; } .lp-win-tabs { gap: 14px; } }
 .lp-card-more { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 20px; } .lp-card-more h3 { margin: 0; white-space: nowrap; } .lp-card-more p { max-width: 70ch; }
 @media (max-width: 1000px) { .lp-card-more { flex-direction: column; align-items: flex-start; } .lp-card-more h3 { white-space: normal; } }
+.lp-watch { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 8px; font-weight: 500; color: var(--color-text-primary); }
+.lp-watch:hover { color: var(--pink); } .lp-watch:hover .lp-watch-i { background: var(--pink); color: #fff; }
+.lp-watch-i { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--color-mint-200); color: var(--color-green-700); transition: background-color .15s ease, color .15s ease; }

@@ -81,7 +81,7 @@ export default function Landing() {
         <div className="lp-nav-in">
           <a className="lp-brand" href="#top"><span className="lp-brand-mark" aria-hidden="true"><Icon name="check" size={14} /></span>Workation approval</a>
           <nav aria-label="Sections">
-            <a href="#problem">Problem</a><a href="#prototype">Prototype</a><a href="#ai">AI</a><a href="#figma">Figma</a>
+            <a href="#problem">Problem</a><a href="#prototype">Prototype</a><a href="#video">Video</a><a href="#ai">AI</a><a href="#figma">Figma</a>
           </nav>
           <div className="lp-nav-r">
             <a className="lp-link" href={fig()} target="_blank" rel="noreferrer">Open Figma</a>
@@ -100,6 +100,7 @@ export default function Landing() {
               <div className="lp-cta">
                 <a className="lp-btn lp-btn-pink" href="#prototype">Try the prototype</a>
                 <a className="lp-btn lp-btn-line" href={fig()} target="_blank" rel="noreferrer">See the Figma file</a>
+                <a className="lp-watch" href="#video"><span className="lp-watch-i"><svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" /></svg></span>Watch the 9-minute walkthrough</a>
               </div>
               <p className="lp-meta">Concept by Debora Moratalla. Not a WorkFlex product. The prototype is password protected: use the one I sent you.</p>
             </div>
