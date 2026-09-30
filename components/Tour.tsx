@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { scenarios, type ScenarioId } from '@/lib/data';
 
 type Chapter = 'Laura decides' | 'The agent works' | 'Try it';
-export type TourStep = { scenario: ScenarioId; target: string | null; chapter: Chapter | null; title: string; body: string; tryQuestion?: string };
+export type TourStep = { scenario: ScenarioId; target: string | null; chapter: Chapter | null; title: string; body: string; tryQuestion?: string; view?: 'settings' };
 
 export const TOUR: TourStep[] = [
   { scenario: 'ready', target: null, chapter: null, title: 'See how it works in 1 minute', body: 'Laura approves Workations and has to defend every decision to an auditor. An agent does the chasing and checking. She decides.' },
@@ -12,7 +12,8 @@ export const TOUR: TourStep[] = [
   { scenario: 'ready', target: '.pta .steps', chapter: 'Laura decides', title: 'What is left, and who owns it', body: 'Every step has an owner. Approve unlocks by rules in code, never by the AI.' },
   { scenario: 'ready', target: '.risk-row', chapter: 'Laura decides', title: 'Risk, explained', body: 'Why it is flagged and which rule it comes from, so the decision holds up in an audit.' },
   { scenario: 'ready', target: '.activity', chapter: 'Laura decides', title: 'One audit trail', body: 'Decisions, notes and every agent action in one log, each with a reason. Agent actions can be undone.' },
-  { scenario: 'ready', target: '.agent-settings-link', chapter: 'Laura decides', title: 'You set the agent\'s limits', body: 'What it does on its own and what it must ask first. Approve, reject and cancel are always yours.' },
+  { scenario: 'ready', target: '.agent-settings-link', chapter: 'Laura decides', title: 'You set the agent\'s limits', body: 'What the agent may do on its own and what it must ask first. Next, see where it is set.' },
+  { scenario: 'ready', view: 'settings', target: '.sp-main .sp-card', chapter: 'Laura decides', title: 'Where you set it', body: 'Company settings, Agent tab. Each task is Auto, Ask me or Never. Approve, reject and cancel stay locked to you.' },
   { scenario: 'working', target: '.pta .steps', chapter: 'The agent works', title: 'It chases', body: 'Suba has no business visa yet. The agent asked for it and will remind the approver. Nothing for Laura to do, so Approve stays locked.' },
   { scenario: 'check', target: '.pta .steps', chapter: 'The agent works', title: "It says when it couldn't check", body: 'The issuer did not respond, so the step goes back to Laura. She can still approve, with a note on what she checked.' },
   { scenario: 'conflict', target: '.alerts', chapter: 'The agent works', title: 'It catches bad data', body: 'Trip dates before the request date, days counted in the wrong year. Approval pauses until it is fixed.' },

@@ -79,7 +79,7 @@ export default function Page() {
   const [note, setNote] = useState('');
   const [tour, setTour] = useState<number | null>(null);
   const tourResume = useRef(0);
-  const goTour = useCallback((i: number) => { setMenu(false); setDialog(null); setOpen(true); setScenario(TOUR[i].scenario); setTour(i); tourResume.current = i; }, []);
+  const goTour = useCallback((i: number) => { setMenu(false); setDialog(null); setView(TOUR[i].view ?? 'requests'); setOpen(!TOUR[i].view); setScenario(TOUR[i].scenario); setTour(i); tourResume.current = i; }, []);
   const closeTour = useCallback((finished: boolean) => { setTour(null); if (finished) tourResume.current = 0; }, []);
   const tryQuestion = useCallback((q: string) => {
     closeTour(true);
