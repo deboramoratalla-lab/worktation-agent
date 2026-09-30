@@ -68,9 +68,9 @@ const base: WorkationRequest = {
     { id: 'report', name: 'Risk assessment report', meta: 'PDF · 10 pages · 31 Mar', status: 'ready' },
   ],
   activity: [
-    { id: 'a-recheck', kind: 'agent', title: 'Agent re-checked the risk', body: 'Lili uploaded her business visa. Work entitlement is now low risk.', time: '3 Apr, 11:20 · auto', undoable: true },
+    { id: 'a-recheck', kind: 'agent', title: 'Agent re-checked the risk', body: 'Lili uploaded their business visa. Work entitlement is now low risk.', time: '3 Apr, 11:20 · auto', undoable: true },
     { id: 'a-it', kind: 'decision', title: 'Anna Roth approved IT security', time: '3 Apr, 09:12' },
-    { id: 'a-visa', kind: 'agent', title: 'Agent asked Lili for her business visa', body: 'Why: work entitlement is high risk until a business visa is uploaded.', time: '1 Apr, 09:00 · auto' },
+    { id: 'a-visa', kind: 'agent', title: 'Agent asked Lili for their business visa', body: 'Why: work entitlement is high risk until a business visa is uploaded.', time: '1 Apr, 09:00 · auto' },
     { id: 'a-a1', kind: 'system', title: 'A1 certificate issued', time: '2 Apr, 15:40' },
     { id: 'a-mgr', kind: 'decision', title: 'Tom Weber approved as manager', time: '31 Mar, 16:20' },
   ],
