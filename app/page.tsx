@@ -281,7 +281,9 @@ export default function Page() {
 
   function approve() {
     setApproved(true);
-    logDecision({ kind: 'decision', title: 'You approved the request', time: '' });
+    const withNote = note.trim();
+    logDecision({ kind: 'decision', title: 'You approved the request', ...(withNote ? { body: `Note: ${withNote}` } : {}), time: '' });
+    if (withNote) setNote('');
     showToast(`Request approved. ${firstName} and Tom were notified.`, () => {
       setApproved(false);
       log({ kind: 'decision', title: 'You undid the approval', body: 'The decision and its snapshot stay in the log.', time: `${at()}` });
@@ -388,6 +390,7 @@ export default function Page() {
                     <a className="t-label-s c-link" href="#" onClick={(e) => e.preventDefault()} style={{ display: 'inline-flex', gap: 4, alignItems: 'center', textDecoration: 'none' }}>Thailand guide <Icon name="external-link" size={14} /></a>
                   </div>
                 </div>
+                <button className="btn btn-ghost-danger" onClick={(e) => { lastFocus.current = e.currentTarget; setDialog({ kind: 'cancel' }); }}>Cancel request</button>
                 <div className="menu-wrap">
                   <button className="btn btn-secondary" aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu((m) => !m)}>
                     <Icon name="more-vertical" /> Actions
@@ -402,8 +405,6 @@ export default function Page() {
                     }}>
                       <button role="menuitem" onClick={openDates}><Icon name="calendar" /> Change dates</button>
                       <button role="menuitem" onClick={() => openDraft('message')}><Icon name="message" /> Message {firstName}</button>
-                      <hr />
-                      <button role="menuitem" className="danger" onClick={() => { lastFocus.current = document.activeElement as HTMLElement; setMenu(false); setDialog({ kind: 'cancel' }); }}><Icon name="close" /> Cancel request</button>
                     </div>
                   )}
                 </div>
@@ -496,6 +497,7 @@ export default function Page() {
                       <input id="note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note for the record…" />
                       <button className="btn btn-ghost" type="submit">Save</button>
                     </form>
+                    {note.trim() && <p className="t-caption c-muted" style={{ marginTop: -16 }}>Approving adds this note to your decision in the log.</p>}
                     <ul className="activity" aria-live="polite">
                       {visibleActivity.map((a) => (
                         <li key={a.id} className={`act ${a.kind}`}>

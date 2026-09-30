@@ -150,6 +150,7 @@ body { padding-top: 40px; }
 .btn-secondary { background: var(--button-secondary-bg); color: var(--button-secondary-text); border: 1px solid var(--button-secondary-border); }
 .btn-danger { background: var(--button-danger-bg); color: var(--button-danger-text); }
 .btn-ghost { color: var(--color-text-brand); }
+.btn-ghost-danger { color: var(--color-status-risk-high-fg); background: transparent; }
 .btn-tonal { background: var(--color-bg-canvas); color: var(--button-secondary-text); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn-block { width: 100%; }
@@ -356,3 +357,4 @@ body { padding-top: 40px; }
 .level { font-size: 12px; line-height: 16px; font-weight: 500; padding: 2px 8px; border-radius: var(--radius-full); background: var(--color-bg-canvas); color: var(--color-text-secondary); white-space: nowrap; }
 .level.Auto { background: var(--color-agent-bg); color: var(--color-agent-fg); }
 .level.Only-you { background: var(--color-bg-brand-subtle); color: var(--color-text-brand); }
+.btn-ghost-danger:hover { background: var(--color-status-risk-high-bg); }
