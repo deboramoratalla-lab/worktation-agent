@@ -85,6 +85,11 @@ export default function Page() {
     setTimeout(() => { const el = document.getElementById('ask'); el?.scrollIntoView({ block: 'center', behavior: 'smooth' }); el?.focus(); }, 50);
   }, [closeTour]);
   useEffect(() => {
+    // Deep link from the Figma file: ?s=ready|working|check|conflict opens that request, no tour
+    const id = new URLSearchParams(window.location.search).get('s') as ScenarioId | null;
+    if (id && ORDER.includes(id)) { try { localStorage.setItem('tour-seen', '1'); } catch {} setScenario(id); setOpen(true); }
+  }, []);
+  useEffect(() => {
     try { if (!localStorage.getItem('tour-seen')) { localStorage.setItem('tour-seen', '1'); setTimeout(() => goTour(0), 600); } } catch {}
   }, [goTour]);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
