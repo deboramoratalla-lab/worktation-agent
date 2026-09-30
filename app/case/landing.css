@@ -153,3 +153,6 @@ html { scroll-behavior: smooth; scroll-padding-top: 72px; }
 .lp-watch { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 8px; font-weight: 500; color: var(--color-text-primary); }
 .lp-watch:hover { color: var(--pink); } .lp-watch:hover .lp-watch-i { background: var(--pink); color: #fff; }
 .lp-watch-i { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--color-mint-200); color: var(--color-green-700); transition: background-color .15s ease, color .15s ease; }
+.lp-nav-cta { opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .2s ease, transform .2s ease, visibility .2s; }
+.is-past-hero .lp-nav-cta { opacity: 1; visibility: visible; transform: none; }
+@media (prefers-reduced-motion: reduce) { .lp-nav-cta { transition: none; } }

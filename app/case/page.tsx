@@ -71,21 +71,16 @@ export default function Landing() {
       <Reveal />
       <a className="lp-skip" href="#main">Skip to content</a>
 
-      <div className="lp-banner">
-        <span className="lp-banner-tag">Live prototype</span>
-        <span>Four requests, a working AI agent, sample data</span>
-        <a className="lp-banner-btn" href="#prototype">Try it</a>
-      </div>
+      
 
       <header className="lp-nav">
         <div className="lp-nav-in">
           <a className="lp-brand" href="#top"><span className="lp-brand-mark" aria-hidden="true"><Icon name="check" size={14} /></span>Workation approval</a>
           <nav aria-label="Sections">
-            <a href="#problem">Problem</a><a href="#prototype">Prototype</a><a href="#video">Video</a><a href="#ai">AI</a><a href="#figma">Figma</a>
+            <a href="#problem">Problem</a><a href="#prototype">Prototype</a><a href="#video">Video</a><a href="#ai">AI</a><a href="#figma">Figma file</a>
           </nav>
           <div className="lp-nav-r">
-            <a className="lp-link" href={fig()} target="_blank" rel="noreferrer">Open Figma</a>
-            <a className="lp-btn lp-btn-pink lp-btn-sm" href="#prototype">Try the prototype</a>
+            <a className="lp-btn lp-btn-pink lp-btn-sm lp-nav-cta" href="#prototype">Try the prototype</a>
           </div>
         </div>
       </header>
