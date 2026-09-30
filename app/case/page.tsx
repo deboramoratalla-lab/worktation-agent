@@ -151,7 +151,7 @@ export default function Landing() {
                 <h3>Not sure where to start? Take the tour.</h3>
                 <p>It walks you through the screen one chapter at a time and explains each decision as you see it. It ends on Company settings.</p>
               </div>
-              <a className="lp-btn lp-btn-pink" href="/?tour=1">Start the tour<Icon name="arrow-right" size={16} /></a>
+              <a className="lp-btn lp-btn-pink" href="/?tour=1" target="_blank" rel="noopener noreferrer">Start the tour<Icon name="arrow-right" size={16} /></a>
             </div>
             <p className="lp-or">Or open a request</p>
             <div className="lp-box">
@@ -167,7 +167,7 @@ export default function Landing() {
                 <h3>Decide how far the agent goes</h3>
                 <p>In Company settings, Agent tab, each task is Auto, Ask me or Never. Approve, reject and cancel always stay with Laura.</p>
               </div>
-              <a className="lp-btn lp-btn-pink" href="/?v=settings">Open Company settings<Icon name="arrow-right" size={16} /></a>
+              <a className="lp-btn lp-btn-pink" href="/?v=settings" target="_blank" rel="noopener noreferrer">Open Company settings<Icon name="arrow-right" size={16} /></a>
             </div>
           </div>
         </section>

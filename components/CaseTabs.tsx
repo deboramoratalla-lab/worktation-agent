@@ -28,7 +28,7 @@ export function CaseTabs({ cases }: { cases: CaseTab[] }) {
           <ul className="lp-checks">
             {c.try.map((t) => (<li key={t}><Icon name="check" size={16} />{t}</li>))}
           </ul>
-          <a className="lp-btn lp-btn-pink" href={`/?s=${c.scenario}`}>Open {c.name}’s request<Icon name="arrow-right" size={16} /></a>
+          <a className="lp-btn lp-btn-pink" href={`/?s=${c.scenario}`} target="_blank" rel="noopener noreferrer">Open {c.name}’s request<Icon name="arrow-right" size={16} /></a>
         </div>
         <div className="lp-panel-r" aria-hidden="true">
           <div className="lp-win">
