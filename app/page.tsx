@@ -768,15 +768,23 @@ export default function Page() {
       )}
 
       <header className="cs-bar">
-        <span className="t-caption cs-note">Case study concept by Debora Moratalla · Not a WorkFlex product · Sample data</span>
-        <span className="t-caption c-muted cs-hint">{ORDER.length} requests in the queue · ‹ › or J K to move</span>
-        <div className="cs-role t-caption" role="group" aria-label="Choose whose screen you are looking at">
-          <span className="c-muted">See this screen as</span>
-          <button className="cs-seg t-label-s" aria-pressed={role === 'gm'} onClick={() => setRole('gm')}>Global Mobility</button>
-          <button className="cs-seg t-label-s" aria-pressed={role === 'hr'} onClick={() => setRole('hr')}>HR approver</button>
-          {role === 'hr' && <span className="c-muted">HR cannot approve without coverage</span>}
+        <div className="cs-id">
+          <span className="cs-tag t-label-s">Case study</span>
+          <span className="cs-note t-caption">Concept by Debora Moratalla · Not a WorkFlex product · Sample data</span>
         </div>
-        <button className="btn btn-secondary cs-tour" onClick={() => goTour(tourResume.current)}><Icon name="book" /> Walkthrough</button>
+        <div className="cs-tools">
+          <div className="cs-role t-caption" role="group" aria-label="Choose whose screen you are looking at">
+            <span>See this screen as</span>
+            <div className="cs-track">
+              <button className="cs-seg t-label-s" aria-pressed={role === 'gm'} onClick={() => setRole('gm')}>Global Mobility</button>
+              <button className="cs-seg t-label-s" aria-pressed={role === 'hr'} onClick={() => setRole('hr')}>HR approver</button>
+            </div>
+            {role === 'hr' && <span className="cs-roletip">Cannot approve without coverage</span>}
+          </div>
+          <span className="cs-divider" aria-hidden="true" />
+          <span className="cs-hint t-caption">{ORDER.length} requests · ‹ › or J K</span>
+          <button className="cs-tour t-label-s" onClick={() => goTour(tourResume.current)}><Icon name="book" size={14} /> Walkthrough</button>
+        </div>
       </header>
       {tour !== null && <Tour step={tour} onStep={goTour} onClose={closeTour} onTry={tryQuestion} />}
     </>
