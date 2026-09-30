@@ -24,7 +24,7 @@ export function CaseTabs({ cases }: { cases: CaseTab[] }) {
           <span className={`lp-pill lp-pill-${c.tone}`}>{c.tag}</span>
           <h3>{c.name}’s request</h3>
           <p>{c.summary}</p>
-          <p className="lp-try-h">What to try</p>
+          <p className="lp-try-h">Things to try</p>
           <ul className="lp-checks">
             {c.try.map((t) => (<li key={t}><Icon name="check" size={16} />{t}</li>))}
           </ul>

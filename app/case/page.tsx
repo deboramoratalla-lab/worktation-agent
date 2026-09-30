@@ -14,28 +14,28 @@ const FIGMA = 'https://www.figma.com/design/cl9iO18ttAAfWUZpsvTJ0V';
 const fig = (node?: string) => (node ? `${FIGMA}?node-id=${node.replace(':', '-')}` : FIGMA);
 
 const PROBLEMS: { icon: IconName; title: string; now: string; before: string; where: string }[] = [
-  { icon: 'clock', title: 'Nobody knew what to do next', now: 'The header says what to do now: the agent’s suggestion, one main button and the reason.', before: 'Status in a corner, no next step.', where: 'Request header' },
-  { icon: 'eye', title: 'Risk was just a label', now: 'Each risk says which check flagged it and why, with the source one click away.', before: '“Medium risk” and a PDF to open.', where: 'Risk rows · Sources' },
-  { icon: 'calendar', title: 'Past dates went unnoticed', now: 'A banner names the conflict. Approving anyway asks for a reason, and it’s logged.', before: 'A 2024 trip created in 2025, no warning.', where: 'Alert banner · Dialog' },
-  { icon: 'check', title: 'Approved still looked pending', now: 'Decided steps become a record: who, when and undo. Only pending steps have buttons.', before: 'Approved steps still looked like buttons.', where: 'Approval steps' },
-  { icon: 'close', title: 'Cancel sat next to edit', now: 'Reject and Cancel are separate, say what they do, and ask for a reason.', before: 'Destructive action in the same menu as edits.', where: 'Actions · Dialog' },
-  { icon: 'file', title: 'No history', now: 'One activity log with decisions, agent actions and comments together.', before: 'No audit trail. Comments lived elsewhere.', where: 'Activity' },
+  { icon: 'clock', title: 'No clear next step', now: 'The header now says what to do: the agent’s suggestion, one main button and the reason.', before: 'Status in a corner, no next step.', where: 'Request header' },
+  { icon: 'eye', title: 'Risk was only a label', now: 'Each risk says which check flagged it and why. The source is one click away.', before: '“Medium risk” and a PDF to open.', where: 'Risk rows · Sources' },
+  { icon: 'calendar', title: 'Past dates, no warning', now: 'A banner names the conflict. To approve anyway, Laura writes a reason, and it’s logged.', before: 'A 2024 trip created in 2025, no warning.', where: 'Alert banner · Dialog' },
+  { icon: 'check', title: 'Approved looked pending', now: 'Once someone decides, the step shows who, when, and an undo. Only pending steps keep buttons.', before: 'Approved steps still looked like buttons.', where: 'Approval steps' },
+  { icon: 'close', title: 'Cancel next to edit', now: 'Reject and Cancel are apart from edits, say what they do, and ask for a reason.', before: 'Destructive action in the same menu as edits.', where: 'Actions · Dialog' },
+  { icon: 'file', title: 'No history at all', now: 'One activity log: decisions, agent actions and comments in the same place.', before: 'No audit trail. Comments lived elsewhere.', where: 'Activity' },
 ];
 
 const CASES: CaseTab[] = [
-  { name: 'Lili', scenario: 'ready', tag: 'Ready', tone: 'ok', summary: 'All checks pass. Documents are complete and the dates are in the future.', try: ['Approve, then Undo it from the toast', 'Open Social security risk and its sources'] },
-  { name: 'Suba', scenario: 'working', tag: 'In progress', tone: 'warn', summary: 'The agent is still chasing a missing document. Laura can wait or approve without coverage.', try: ['Read the reminder the agent drafted', 'Approve without coverage, or Reject'] },
-  { name: 'Stefan', scenario: 'check', tag: 'Needs a check', tone: 'warn', summary: 'A certificate is missing. Approving anyway needs a reason from Laura.', try: ['Approve anyway and write the reason', 'Dismiss the agent’s suggestion'] },
-  { name: 'Mara', scenario: 'conflict', tag: 'Conflict', tone: 'bad', summary: 'The trip dates are in the past. Laura confirms or changes them before she decides.', try: ['Dates are correct, or Change dates', 'Then Approve or Reject'] },
+  { name: 'Lili', scenario: 'ready', tag: 'Ready', tone: 'ok', summary: 'Everything checks out. Documents are complete and the dates are in the future.', try: ['Approve, then Undo it from the toast', 'Open Social security risk and its sources'] },
+  { name: 'Suba', scenario: 'working', tag: 'In progress', tone: 'warn', summary: 'The agent is still chasing a missing document. Laura can wait, or approve without coverage.', try: ['Read the reminder the agent drafted', 'Approve without coverage, or Reject'] },
+  { name: 'Stefan', scenario: 'check', tag: 'Needs a check', tone: 'warn', summary: 'A certificate is missing. To approve anyway, Laura has to write why.', try: ['Approve anyway and write the reason', 'Dismiss the agent’s suggestion'] },
+  { name: 'Mara', scenario: 'conflict', tag: 'Conflict', tone: 'bad', summary: 'The trip dates are in the past. Laura confirms or changes them before deciding.', try: ['Dates are correct, or Change dates', 'Then Approve or Reject'] },
 ];
 
-const USES = ['Risk summary in plain words: which check, and why', 'A recommendation with confidence and sources', 'Flags for past dates, balance conflicts, missing documents', 'Drafts for reminders. Laura writes the rejection reason'];
+const USES = ['A plain-words risk summary: which check, and why', 'A recommendation, with its confidence and sources', 'Flags for past dates, balance conflicts, missing documents', 'Reminder drafts. Laura writes the rejection reason herself'];
 const RULES: [IconName, string, string][] = [
-  ['users', 'Human decides', 'Approve, reject and cancel are only Laura’s.'],
-  ['sparkle', 'Labelled', 'Anything the agent wrote says so.'],
-  ['book', 'Sourced', 'Every claim links to where it came from.'],
-  ['close', 'Dismissable', 'Laura can dismiss a suggestion.'],
-  ['clock', 'Logged', 'Agent actions and overrides go in the audit trail.'],
+  ['users', 'Human decides', 'Approve, reject and cancel are Laura’s.'],
+  ['sparkle', 'Labelled', 'If the agent wrote it, it says so.'],
+  ['book', 'Sourced', 'Every claim links to its source.'],
+  ['close', 'Dismissable', 'Laura can dismiss any suggestion.'],
+  ['clock', 'Logged', 'What the agent did, and what Laura overrode, goes in the audit trail.'],
 ];
 
 const START: [IconName, string, string][] = [
@@ -89,15 +89,15 @@ export default function Landing() {
         <section id="top" className="lp-hero">
           <div className="lp-in lp-hero-in">
             <div>
-              <span className="lp-chip"><Icon name="sparkle" size={12} />Case study · Senior Product Designer</span>
+              <span className="lp-chip"><Icon name="sparkle" size={12} />My case study for WorkFlex</span>
               <h1>Decide fast. <Mark>Defend it</Mark> later.</h1>
-              <p className="lp-lead">I redesigned the Workation request screen for Global Mobility. It tells Laura what to do next, explains each risk, and keeps a record she can show an auditor. The agent suggests. She decides.</p>
+              <p className="lp-lead">This is my redesign of the Workation request screen. I wanted Laura, who approves these for Global Mobility, to know what to do next, understand every risk, and have a record she can show an auditor. The agent suggests. She decides.</p>
               <div className="lp-cta">
                 <a className="lp-btn lp-btn-pink" href="#prototype">Try the prototype</a>
                 <a className="lp-btn lp-btn-line" href={fig()} target="_blank" rel="noreferrer">See the Figma file</a>
-                <a className="lp-watch" href="#video"><span className="lp-watch-i"><svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" /></svg></span>Watch the 9-minute walkthrough</a>
+                <a className="lp-watch" href="#video"><span className="lp-watch-i"><svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" /></svg></span>Watch me walk through it (9 min)</a>
               </div>
-              <p className="lp-meta">Concept by Debora Moratalla. Not a WorkFlex product. The prototype is password protected: use the one I sent you.</p>
+              <p className="lp-meta">I’m Debora, and this is a concept, not a WorkFlex product. The prototype asks for a password: it’s the one I sent you.</p>
             </div>
             <div className="lp-win lp-win-hero" aria-hidden="true">
               <div className="lp-win-bar"><i /><i /><i /><span>workation-agent.vercel.app</span></div>
@@ -120,7 +120,7 @@ export default function Landing() {
 
         <section id="problem" data-reveal className="lp-sec lp-tone-b" aria-labelledby="h-problem">
           <div className="lp-in">
-            <Head eyebrow="The problem was real" sub="The current screen hides the next step, shows risk as a label and keeps no record. The brief lists nine problems. I grouped them into six fixes.">
+            <Head eyebrow="Where I started" sub="The current screen hides the next step, shows risk as a label and keeps no record. The brief lists nine problems. I grouped them into six.">
               <span id="h-problem">Laura couldn’t tell what to do next, or <Mark>defend what she did</Mark>.</span>
             </Head>
             <ul className="lp-grid3">
@@ -134,8 +134,8 @@ export default function Landing() {
               ))}
               <li className="lp-card lp-card-more">
                 <span className="lp-tile"><Icon name="book" size={20} /></span>
-                <h3>…and the rest of the list</h3>
-                <p>Every change traces back to one question: does it help Laura decide faster or defend the decision better? If not, it’s out.</p>
+                <h3>The rest of the list</h3>
+                <p>I kept asking one question: does this help Laura decide faster, or defend her decision better? If not, I left it out.</p>
               </li>
             </ul>
           </div>
@@ -143,29 +143,29 @@ export default function Landing() {
 
         <section id="prototype" data-reveal className="lp-sec" aria-labelledby="h-proto">
           <div className="lp-in">
-            <Head eyebrow="Try it yourself" sub="You play Laura and handle four requests. The agent writes its summary when you open a request, drafts reminders and answers questions. Approve, reject and undo all work.">
-              <span id="h-proto">A live prototype with a <Mark>working AI agent</Mark>.</span>
+            <Head eyebrow="The prototype" sub="You play Laura and handle four requests. The agent writes a summary when you open one, drafts reminders and answers questions. Approve, reject and undo all work.">
+              <span id="h-proto">A prototype with a <Mark>real AI agent</Mark> inside.</span>
             </Head>
             <div className="lp-strip lp-strip-tour">
               <div>
-                <h3>Not sure where to start? Take the walkthrough.</h3>
-                <p>A guided tour of the screen, one chapter at a time. It explains each decision as you see it and ends on Company settings.</p>
+                <h3>Not sure where to start? Take the tour.</h3>
+                <p>It walks you through the screen one chapter at a time and explains each decision as you see it. It ends on Company settings.</p>
               </div>
-              <a className="lp-btn lp-btn-pink" href="/?tour=1">Start the walkthrough<Icon name="arrow-right" size={16} /></a>
+              <a className="lp-btn lp-btn-pink" href="/?tour=1">Start the tour<Icon name="arrow-right" size={16} /></a>
             </div>
-            <p className="lp-or">Or jump straight into a request</p>
+            <p className="lp-or">Or open a request</p>
             <div className="lp-box">
               <CaseTabs cases={CASES} />
             </div>
             <ul className="lp-facts">
-              <li><Icon name="sparkle" size={18} /><span><b>Live AI</b>Summaries, drafts and answers are generated when you open a request.</span></li>
-              <li><Icon name="users" size={18} /><span><b>You decide</b>The agent never approves or rejects. Every action can be undone.</span></li>
-              <li><Icon name="file" size={18} /><span><b>Sample data</b>The requests are made up. Risk results are samples, not a real check.</span></li>
+              <li><Icon name="sparkle" size={18} /><span><b>Live AI</b>The agent writes summaries, drafts and answers when you open a request.</span></li>
+              <li><Icon name="users" size={18} /><span><b>You decide</b>The agent never approves or rejects, and you can undo anything.</span></li>
+              <li><Icon name="file" size={18} /><span><b>Sample data</b>The requests are invented and the risk results are samples, not a real check.</span></li>
             </ul>
             <div className="lp-strip">
               <div>
-                <h3>Set how far the agent goes</h3>
-                <p>Company settings, Agent tab. Each task is Auto, Ask me or Never. Approve, reject and cancel stay locked to Laura.</p>
+                <h3>Decide how far the agent goes</h3>
+                <p>In Company settings, Agent tab, each task is Auto, Ask me or Never. Approve, reject and cancel always stay with Laura.</p>
               </div>
               <a className="lp-btn lp-btn-pink" href="/?v=settings">Open Company settings<Icon name="arrow-right" size={16} /></a>
             </div>
@@ -174,8 +174,8 @@ export default function Landing() {
 
         <section id="video" data-reveal className="lp-sec lp-tone-b" aria-labelledby="h-video">
           <div className="lp-in">
-            <Head eyebrow="Walkthrough" sub="I explain first, then walk through the prototype, then the Figma file.">
-              <span id="h-video">Nine minutes, <Mark>in my words</Mark>.</span>
+            <Head eyebrow="The video" sub="First the idea, then the prototype, then the Figma file.">
+              <span id="h-video">Nine minutes, <Mark>in my own words</Mark>.</span>
             </Head>
             <div className="lp-video" role="img" aria-label="Video placeholder">
               <span className="lp-play"><svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" /></svg></span>
@@ -187,9 +187,9 @@ export default function Landing() {
         <section id="ai" data-reveal className="lp-sec lp-dark" aria-labelledby="h-ai">
           <div className="lp-in lp-ai">
             <div>
-              <p className="lp-eyebrow">AI that fits the job</p>
+              <p className="lp-eyebrow">How I used AI</p>
               <h2 id="h-ai">The agent suggests. <Mark>Laura decides.</Mark></h2>
-              <p className="lp-sub">The AI is there to cut the reading, not the responsibility. It has four jobs and five rules.</p>
+              <p className="lp-sub">I wanted the AI to cut the reading, not the responsibility. So it has four jobs and five rules.</p>
               <ul className="lp-checks lp-checks-dark">{USES.map((u) => (<li key={u}><Icon name="check" size={16} />{u}</li>))}</ul>
             </div>
             <ul className="lp-rules">
@@ -200,14 +200,14 @@ export default function Landing() {
 
         <section id="figma" data-reveal className="lp-sec" aria-labelledby="h-figma">
           <div className="lp-in">
-            <Head eyebrow="Built to hand over" sub="Ten pages from research to handoff. Auto-layout everywhere, spacing on an 8px scale, layers named the way a team would name them.">
-              <span id="h-figma">A Figma file a developer can <Mark>build from</Mark>.</span>
+            <Head eyebrow="The Figma file" sub="Ten pages, from research to handoff. Auto-layout everywhere, an 8px spacing scale, and layers named the way a team would.">
+              <span id="h-figma">A file a developer can <Mark>build from</Mark>.</span>
             </Head>
             <div className="lp-strip lp-strip-start">
               <div>
-                <h3>Five pages to start with</h3>
+                <h3>Start with these five</h3>
                 <p>The design system, the screens, the prototype and the handoff notes.</p>
-                <a className="lp-btn lp-btn-pink" href={fig()} target="_blank" rel="noreferrer">Open the Figma file<Icon name="external-link" size={16} /></a>
+                <a className="lp-btn lp-btn-pink" href={fig()} target="_blank" rel="noreferrer">Open in Figma<Icon name="external-link" size={16} /></a>
               </div>
               <ul className="lp-mini">
                 {START.map(([ic, n, id]) => (
@@ -216,9 +216,9 @@ export default function Landing() {
               </ul>
             </div>
             <ul className="lp-grid3 lp-stats3">
-              <li className="lp-card"><p className="lp-big">116</p><p className="lp-cap">variables in 3 collections</p><p>Core 50, Semantic 46, Component 20. Figma names match the CSS tokens: <code>bg/inverse</code> is <code>--color-bg-inverse</code>.</p></li>
-              <li className="lp-card"><p className="lp-big">12</p><p className="lp-cap">components with states</p><p>Button alone has 24 variants. Risk row, Dialog, Alert banner and Autonomy setting cover the rest.</p></li>
-              <li className="lp-card"><p className="lp-big">4</p><p className="lp-cap">clickable flows</p><p>Lili, Suba, Mara and Stefan in Figma, with toasts and undo. Every screen links to its live state.</p></li>
+              <li className="lp-card"><p className="lp-big">116</p><p className="lp-cap">variables in 3 collections</p><p>Core 50, Semantic 46, Component 20. Names match the CSS tokens, so <code>bg/inverse</code> becomes <code>--color-bg-inverse</code>.</p></li>
+              <li className="lp-card"><p className="lp-big">12</p><p className="lp-cap">components with states</p><p>Button alone has 24 variants. The rest cover risk, approval steps, documents, dialogs and settings.</p></li>
+              <li className="lp-card"><p className="lp-big">4</p><p className="lp-cap">clickable flows</p><p>Lili, Suba, Stefan and Mara, with toasts and undo.</p></li>
             </ul>
             <details className="lp-more">
               <summary>All ten pages and twelve components</summary>
@@ -227,25 +227,25 @@ export default function Landing() {
               </ul>
               <ul className="lp-chips">{COMPONENTS.map(([n, id, v]) => (<li key={n}><a href={fig(id)} target="_blank" rel="noreferrer">{n}<span>{v}</span></a></li>))}</ul>
             </details>
-            <p className="lp-foot-note">Accessibility: aiming for WCAG 2.1 AA. Status always has a label or icon, never colour alone, and focus is visible.</p>
+            <p className="lp-foot-note">Accessibility: I’m aiming for WCAG 2.1 AA. Status always has a label or icon, never colour alone, and focus is visible. I haven’t audited it with a screen reader.</p>
           </div>
         </section>
 
         <section data-reveal className="lp-sec lp-tone-b" aria-labelledby="h-out">
           <div className="lp-in">
-            <Head eyebrow="Being honest"><span id="h-out">What I <Mark>didn’t do</Mark>.</span></Head>
+            <Head eyebrow="Limits"><span id="h-out">What I <Mark>didn’t do</Mark>.</span></Head>
             <ul className="lp-grid3">
-              <li className="lp-card"><span className="lp-tile"><Icon name="settings" size={20} /></span><h3>Other settings tabs</h3><p>They come from the WorkFlex Help Center. Only Agent is designed.</p></li>
-              <li className="lp-card"><span className="lp-tile"><Icon name="chart" size={20} /></span><h3>Real risk scoring</h3><p>The agent’s output is sample data. I show how it explains, not how it scores.</p></li>
-              <li className="lp-card"><span className="lp-tile"><Icon name="users" size={20} /></span><h3>Validation</h3><p>I didn’t run research. I’d test Auto, Ask me and Never with real approvers.</p></li>
+              <li className="lp-card"><span className="lp-tile"><Icon name="settings" size={20} /></span><h3>Other settings tabs</h3><p>I took them from the WorkFlex Help Center. I only designed the Agent tab.</p></li>
+              <li className="lp-card"><span className="lp-tile"><Icon name="chart" size={20} /></span><h3>Real risk scoring</h3><p>The agent’s output is sample data. I show how it explains a risk, not how it scores one.</p></li>
+              <li className="lp-card"><span className="lp-tile"><Icon name="users" size={20} /></span><h3>Validation</h3><p>I haven’t tested with anyone. First I’d try Auto, Ask me and Never with real approvers.</p></li>
             </ul>
           </div>
         </section>
 
         <section data-reveal className="lp-sec lp-final" aria-labelledby="h-final">
           <div className="lp-in lp-final-in">
-            <h2 id="h-final">Want to see how I’d <Mark>defend it</Mark>?</h2>
-            <p className="lp-sub">Open the prototype, then the Figma file. I’m happy to walk through any decision.</p>
+            <h2 id="h-final">Happy to <Mark>defend every choice</Mark>.</h2>
+            <p className="lp-sub">Try the prototype, look at the Figma file, then ask me about anything.</p>
             <div className="lp-cta lp-cta-c">
               <a className="lp-btn lp-btn-pink" href="#prototype">Try the prototype</a>
               <a className="lp-btn lp-btn-line" href={fig()} target="_blank" rel="noreferrer">See the Figma file</a>
@@ -254,7 +254,7 @@ export default function Landing() {
         </section>
       </main>
 
-      <footer className="lp-footer"><div className="lp-in">Debora Moratalla · Madrid · Concept only, not a WorkFlex product.</div></footer>
+      <footer className="lp-footer"><div className="lp-in">Debora Moratalla · Madrid · A concept, not a WorkFlex product.</div></footer>
     </div>
   );
 }
