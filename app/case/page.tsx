@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './landing.css';
 import { Icon, type IconName } from '@/components/Icon';
+import { Reveal } from '@/components/Reveal';
 
 export const metadata: Metadata = {
   title: 'Workation approval, case study',
@@ -78,6 +79,7 @@ const CASES = [
 export default function Landing() {
   return (
     <div className="lp">
+      <Reveal />
       <a className="lp-skip" href="#main">Skip to content</a>
       <header className="lp-top"><div className="lp-topin">
         <span className="lp-tag">Case study</span>
@@ -87,6 +89,7 @@ export default function Landing() {
           <a href="#figma">Figma</a>
           <a href="#try">Try it</a>
         </nav>
+        <a className="lp-btn lp-btn-primary lp-btn-sm" href="#try">Try the prototype<Icon name="arrow-right" size={16} /></a>
       </div></header>
 
       <main id="main">
@@ -96,9 +99,9 @@ export default function Landing() {
             <h1>Decide fast. Defend it later.</h1>
             <p className="lp-lead">I redesigned the Workation request detail screen for Global Mobility. It tells Laura what to do next, explains each risk, and keeps a record she can show an auditor. The agent suggests. She decides.</p>
             <div className="lp-cta">
-              <a className="lp-btn lp-btn-primary" href="#try">Try the prototype</a>
-              <a className="lp-btn" href={fig()} target="_blank" rel="noreferrer">Open the Figma file</a>
-              <a className="lp-btn" href="#video">Watch the video</a>
+              <a className="lp-btn lp-btn-primary" href="#try">Try the prototype<Icon name="arrow-right" size={18} /></a>
+              <a className="lp-btn" href={fig()} target="_blank" rel="noreferrer">Open the Figma file<Icon name="external-link" size={16} /></a>
+              <a className="lp-btn" href="#video">Watch the video<Icon name="arrow-right" size={18} /></a>
             </div>
             <p className="lp-meta">Concept by Debora Moratalla. Not a WorkFlex product. Sample data. The prototype is password protected: use the one I sent you.</p>
           </div>
@@ -122,7 +125,7 @@ export default function Landing() {
           <li><b>4</b><span>clickable flows</span></li>
         </ul>
 
-        <section id="video" className="lp-sec" aria-labelledby="h-video">
+        <section id="video" data-reveal className="lp-sec" aria-labelledby="h-video">
           <h2 id="h-video"><span className="lp-hi"><Icon name="eye" size={20} /></span>Video</h2>
           <div className="lp-video" role="img" aria-label="Video placeholder">
             <span className="lp-play"><svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" /></svg></span><span>Video coming soon</span>
@@ -130,7 +133,7 @@ export default function Landing() {
           <p className="lp-cap">9 minutes. I explain first, then walk through the prototype, then the Figma file.</p>
         </section>
 
-        <section id="try" className="lp-sec" aria-labelledby="h-try">
+        <section id="try" data-reveal className="lp-sec" aria-labelledby="h-try">
           <h2 id="h-try"><span className="lp-hi"><Icon name="arrow-right" size={20} /></span>Try the live prototype</h2>
           <div className="lp-intro">
             <p className="lp-lead-sm"><strong>This is a working prototype, not a set of screens.</strong> You play Laura and handle four requests. The agent reads each one and writes its summary as you open it, it drafts reminders, and it answers questions about the case. Approve, reject, undo and the audit trail all work.</p>
@@ -154,7 +157,7 @@ export default function Landing() {
           <p className="lp-cap">Use the switch at the top to see the screen as Global Mobility or HR. Reload to reset a case. Also: <a href="/?v=settings">Company settings</a>.</p>
         </section>
 
-        <section className="lp-sec" aria-labelledby="h-user">
+        <section data-reveal className="lp-sec" aria-labelledby="h-user">
           <h2 id="h-user"><span className="lp-hi"><Icon name="users" size={20} /></span>Who it’s for</h2>
           <div className="lp-two">
             <div>
@@ -168,7 +171,7 @@ export default function Landing() {
           </div>
         </section>
 
-        <section id="decisions" className="lp-sec" aria-labelledby="h-dec">
+        <section id="decisions" data-reveal className="lp-sec" aria-labelledby="h-dec">
           <h2 id="h-dec"><span className="lp-hi"><Icon name="check" size={20} /></span>What changed on the screen</h2>
           <ul className="lp-dec">
             {DECISIONS.map((d, i) => (
@@ -193,7 +196,7 @@ export default function Landing() {
           </div>
         </section>
 
-        <section id="figma" className="lp-sec" aria-labelledby="h-fig">
+        <section id="figma" data-reveal className="lp-sec" aria-labelledby="h-fig">
           <h2 id="h-fig"><span className="lp-hi"><Icon name="grid" size={20} /></span>How the Figma file is organised</h2>
           <p className="lp-lead-sm">Ten pages, from research to handoff. Everything uses auto-layout, spacing follows an 8px scale, and layers are named the way a team would name them.</p>
 
@@ -234,7 +237,7 @@ export default function Landing() {
           <p>Web classes map to Figma frames. For example, <code>.sp-page</code> is Company settings, Agent tab. Each component lists its states and edge cases.</p>
         </section>
 
-        <section className="lp-sec" aria-labelledby="h-out">
+        <section data-reveal className="lp-sec" aria-labelledby="h-out">
           <h2 id="h-out"><span className="lp-hi"><Icon name="alert" size={20} /></span>What I didn’t do</h2>
           <ul className="lp-list">
             <li><strong>Other Company settings tabs</strong>They come from the WorkFlex Help Center. Only Agent is designed.</li>
