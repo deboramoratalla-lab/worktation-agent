@@ -93,6 +93,8 @@ export default function Page() {
     if (new URLSearchParams(window.location.search).get('v') === 'settings') { try { localStorage.setItem('tour-seen', '1'); } catch {} setView('settings'); }
   }, []);
   useEffect(() => {
+    // ?tour=1 starts the guided walkthrough even if it was seen before (linked from the landing)
+    if (new URLSearchParams(window.location.search).get('tour') === '1') { const t = setTimeout(() => goTour(0), 600); return () => clearTimeout(t); }
     try { if (!localStorage.getItem('tour-seen')) { localStorage.setItem('tour-seen', '1'); setTimeout(() => goTour(0), 600); } } catch {}
   }, [goTour]);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);

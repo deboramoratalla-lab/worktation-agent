@@ -158,3 +158,5 @@ html { scroll-behavior: smooth; scroll-padding-top: 72px; }
 @media (prefers-reduced-motion: reduce) { .lp-nav-cta { transition: none; } }
 /* Dark section: no highlighter (white on yellow fails contrast). Yellow text on teal is about 8:1. */
 .lp-dark .lp-mark { background: none; color: var(--color-yellow-400); padding: 0; margin: 0; }
+.lp-strip-tour { margin: 0 0 32px; background: var(--color-bg-inverse); color: #fff; border-color: transparent; } .lp-strip-tour p { color: var(--color-mint-300); } .lp-strip-tour h3 { color: #fff; }
+.lp-or { text-align: center; margin: 0 0 16px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--color-text-secondary); }

@@ -146,6 +146,14 @@ export default function Landing() {
             <Head eyebrow="Try it yourself" sub="You play Laura and handle four requests. The agent writes its summary when you open a request, drafts reminders and answers questions. Approve, reject and undo all work.">
               <span id="h-proto">A live prototype with a <Mark>working AI agent</Mark>.</span>
             </Head>
+            <div className="lp-strip lp-strip-tour">
+              <div>
+                <h3>Not sure where to start? Take the walkthrough.</h3>
+                <p>A guided tour of the screen, one chapter at a time. It explains each decision as you see it and ends on Company settings.</p>
+              </div>
+              <a className="lp-btn lp-btn-pink" href="/?tour=1">Start the walkthrough<Icon name="arrow-right" size={16} /></a>
+            </div>
+            <p className="lp-or">Or jump straight into a request</p>
             <div className="lp-box">
               <CaseTabs cases={CASES} />
             </div>
