@@ -64,6 +64,7 @@ export default function Page() {
   const [noCoverage, setNoCoverage] = useState(false);
   // Demo only: who is looking. Only Global Mobility may approve past a rule.
   const [role, setRole] = useState<Role>('gm');
+  const [view, setView] = useState<'requests' | 'settings'>('requests');
   const [sentToGM, setSentToGM] = useState(false);
   const [open, setOpen] = useState(true);
   const [openRisk, setOpenRisk] = useState<Record<string, boolean>>({ ss: true });
@@ -337,7 +338,8 @@ export default function Page() {
   return (
     <>
       <div className="shell" aria-hidden={open}>
-        <Sidebar needsYou={needsYouCount} user={role === 'gm' ? 'Laura Müller' : 'Nina Weber'} />
+        <Sidebar view={view} onView={setView} needsYou={needsYouCount} user={role === 'gm' ? 'Laura Müller' : 'Nina Weber'} />
+        {view === 'settings' ? <AgentSettings onBack={() => setView('requests')} onSaved={(m) => showToast(m)} /> : (
         <main className="list">
           <p className="t-heading-l">Employee requests</p>
           <div className="tabs t-label-m"><span className="tab-active"><Icon name="briefcase" /> Workations <span className="pill">{ORDER.length}</span></span></div>
@@ -359,6 +361,7 @@ export default function Page() {
             })}
           </div>
         </main>
+        )}
       </div>
 
       {open && (
@@ -570,7 +573,7 @@ export default function Page() {
                           <div className="src-line">
                             <span>Summary by the agent</span><span aria-hidden="true">·</span>
                             <button className="link-btn" onClick={() => showToast(`Sources: ${assess.data.sources.join(', ')}`)}>Sources</button><span aria-hidden="true">·</span>
-                            <button className="link-btn agent-settings-link" onClick={() => { lastFocus.current = document.activeElement as HTMLElement; setDialog({ kind: 'settings' }); }}><Icon name="settings" size={14} /> Agent settings</button>
+                            <button className="link-btn agent-settings-link" onClick={() => { lastFocus.current = document.activeElement as HTMLElement; setOpen(false); setView('settings'); }}><Icon name="settings" size={14} /> Agent settings</button>
                           </div>
                         </>
                       )}
@@ -791,9 +794,81 @@ export default function Page() {
   );
 }
 
-function Sidebar({ needsYou, user }: { needsYou: number; user: string }) {
+type Level3 = 'Auto' | 'Ask me' | 'Never';
+const SETTING_GROUPS: { title: string; note: string; rows: [string, string, Level3][] }[] = [
+  { title: 'Chasing and checks', note: 'Low-risk work the agent can do without asking. Every action shows in Activity with an Undo.', rows: [
+    ['Ask for missing documents', 'When a required document is missing for 2 days', 'Auto'],
+    ['Remind approvers', 'After 2 days without a reply', 'Ask me'],
+    ['Re-run the risk check', 'When dates, destination or documents change', 'Auto'],
+  ] },
+  { title: 'Messages on your behalf', note: 'Anything that goes out under your name. Ask me means you see the draft first.', rows: [
+    ['Message the employee or their manager', 'You review and send the draft', 'Ask me'],
+    ['Draft a reason when you reject', 'You edit it before it is sent', 'Auto'],
+  ] },
+];
+
+function AgentSettings({ onBack, onSaved }: { onBack: () => void; onSaved: (m: string) => void }) {
+  const initial = Object.fromEntries(SETTING_GROUPS.flatMap((g) => g.rows.map(([n, , l]) => [n, l]))) as Record<string, Level3>;
+  const [saved, setSaved] = useState(initial);
+  const [draft, setDraft] = useState(initial);
+  const dirty = Object.keys(initial).some((k) => saved[k] !== draft[k]);
+  return (
+    <main className="list settings-page">
+      <p className="t-caption c-secondary">Company settings / Workations</p>
+      <h1 className="t-heading-l" style={{ margin: 0 }}>Agent settings</h1>
+      <p className="c-secondary">Choose what the agent does on its own for Workation requests. It prepares, chases and checks. You decide.</p>
+      <div className="sp-grid">
+        <div className="sp-main">
+          {SETTING_GROUPS.map((g) => (
+            <section key={g.title} className="sp-card" aria-labelledby={`sg-${g.title}`}>
+              <h2 id={`sg-${g.title}`} className="t-heading-m" style={{ margin: 0 }}>{g.title}</h2>
+              <p className="t-caption c-secondary">{g.note}</p>
+              {g.rows.map(([name, hint]) => (
+                <div key={name} className="sp-row">
+                  <div><div className="t-label-m">{name}</div><div className="t-caption c-secondary">{hint}</div></div>
+                  <div className="cs-track" role="radiogroup" aria-label={name}>
+                    {(['Auto', 'Ask me', 'Never'] as Level3[]).map((l) => (
+                      <button key={l} role="radio" aria-checked={draft[name] === l} className="cs-seg t-label-s" aria-pressed={draft[name] === l} onClick={() => setDraft({ ...draft, [name]: l })}>{l}</button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </section>
+          ))}
+          <section className="sp-card" aria-labelledby="sg-yours">
+            <h2 id="sg-yours" className="t-heading-m" style={{ margin: 0 }}>Always yours</h2>
+            <p className="t-caption c-secondary">The agent can't do these. This can't be changed.</p>
+            {['Approve a request', 'Reject a request', 'Cancel a request'].map((n) => (
+              <div key={n} className="sp-row"><span className="t-label-m">{n}</span><span className="level Only-you">Only you</span></div>
+            ))}
+          </section>
+          <div className="sp-actions">
+            <button className="btn btn-secondary" disabled={!dirty} onClick={() => setDraft(saved)}>Discard changes</button>
+            <button className="btn btn-primary" disabled={!dirty} onClick={() => { setSaved(draft); onSaved('Settings saved. The change is in the company audit log.'); }}>Save changes</button>
+            <button className="link-btn" onClick={onBack}>Back to requests</button>
+          </div>
+        </div>
+        <aside className="sp-side">
+          <section className="sp-card">
+            <h2 className="t-label-m" style={{ margin: 0 }}>Last 30 days</h2>
+            {[['Documents requested', 42], ['Reminders sent', 67], ['Actions undone by your team', 3], ["Couldn't complete", 5]].map(([l, v]) => (
+              <div key={l as string} className="sp-stat"><span className="c-secondary">{l}</span><b>{v}</b></div>
+            ))}
+            <p className="t-caption c-secondary">Sample numbers for the case study.</p>
+          </section>
+          <section className="sp-card">
+            <h2 className="t-label-m" style={{ margin: 0 }}>Changes are logged</h2>
+            <p className="t-caption c-secondary">Who changed what and when is saved with the company audit log. New settings apply from the next agent action.</p>
+          </section>
+        </aside>
+      </div>
+    </main>
+  );
+}
+
+function Sidebar({ needsYou, user, view, onView }: { needsYou: number; user: string; view: 'requests' | 'settings'; onView: (v: 'requests' | 'settings') => void }) {
   const items: [string, IconName, boolean?][][] = [
-    [['Employee requests', 'grid', true], ['Analytics', 'chart'], ['Employee management', 'users'], ['Company settings', 'settings']],
+    [['Employee requests', 'grid', view === 'requests'], ['Analytics', 'chart'], ['Employee management', 'users'], ['Company settings', 'settings', view === 'settings']],
     [['My requests', 'file'], ['Policy overview', 'book']],
   ];
   const titles = ['Admin management', 'My workspace'];
@@ -804,9 +879,9 @@ function Sidebar({ needsYou, user }: { needsYou: number; user: string }) {
         <div key={gi} className="nav-group">
           <div className="nav-title t-label-s">{titles[gi]}</div>
           {g.map(([label, icon, active]) => (
-            <a key={label} href="#" onClick={(e) => e.preventDefault()} className={`nav-item t-label-m ${active ? 'active' : ''}`} style={{ textDecoration: 'none' }} aria-current={active ? 'page' : undefined}>
+            <a key={label} href="#" onClick={(e) => { e.preventDefault(); if (label === 'Employee requests') onView('requests'); if (label === 'Company settings') onView('settings'); }} className={`nav-item t-label-m ${active ? 'active' : ''}`} style={{ textDecoration: 'none' }} aria-current={active ? 'page' : undefined}>
               <Icon name={icon} /> {label}
-              {active && <span className="count t-label-s" aria-label={`${needsYou} requests need you`}>{needsYou}</span>}
+              {active && label === 'Employee requests' && <span className="count t-label-s" aria-label={`${needsYou} requests need you`}>{needsYou}</span>}
             </a>
           ))}
         </div>
