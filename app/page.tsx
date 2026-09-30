@@ -319,21 +319,23 @@ export default function Page() {
   // Visa not issued and nothing else blocking: Laura may approve, but WorkFlex won't cover it
   const canApproveWithoutCoverage = !approvable && !blocking && req.steps.some((s) => s.id === 'visa' && s.state !== 'Done');
 
+  const [filter, setFilter] = useState<'all' | 'needs'>('all');
+  const needsYouCount = ORDER.filter((id) => id !== 'working').length;
   const visibleActivity = showAll ? activity : activity.slice(0, 2);
 
   return (
     <>
       <div className="shell" aria-hidden={open}>
-        <Sidebar />
+        <Sidebar needsYou={needsYouCount} />
         <main className="list">
           <p className="t-heading-l">Employee requests</p>
-          <div className="tabs t-label-m">
-            <span className="c-link">Workations 17</span>
-            <span className="c-secondary">Business travel 24</span>
-            <span className="c-secondary">Assignments 11</span>
+          <div className="tabs t-label-m"><span className="tab-active"><Icon name="briefcase" /> Workations <span className="pill">{ORDER.length}</span></span></div>
+          <div className="filters" role="group" aria-label="Filter requests">
+            <button className="filter" aria-pressed={filter === 'all'} onClick={() => setFilter('all')}>All requests <span className="pill">{ORDER.length}</span></button>
+            <button className="filter" aria-pressed={filter === 'needs'} onClick={() => setFilter('needs')}>Needs you <span className="pill">{needsYouCount}</span></button>
           </div>
           <div className="table">
-            {ORDER.map((id) => {
+            {ORDER.filter((id) => filter === 'all' || id !== 'working').map((id) => {
               const q = scenarios[id].build();
               const lvl = q.risks.reduce<Level>((m, x) => (rank[x.level] > rank[m] ? x.level : m), 'Low');
               return (
@@ -360,7 +362,7 @@ export default function Page() {
                 <span>{req.id}</span>
               </div>
               <div className="queue">
-                <span className="t-caption c-secondary">{ORDER.indexOf(scenario) + 1} of {ORDER.length} needing you</span>
+                <span className="t-caption c-secondary">{ORDER.indexOf(scenario) + 1} of {ORDER.length} requests</span>
                 <button className="icon-btn bordered" aria-label="Previous request (K)" onClick={() => move(-1)}><Icon name="chevron-left" /></button>
                 <button className="icon-btn bordered" aria-label="Next request (J)" onClick={() => move(1)}><Icon name="chevron-right" /></button>
               </div>
@@ -749,7 +751,7 @@ export default function Page() {
 
       <header className="cs-bar">
         <span className="t-caption cs-note">Case study concept by Debora Moratalla · Not a WorkFlex product · Sample data</span>
-        <span className="t-caption c-muted cs-hint">{ORDER.length} requests need you · ‹ › or J K to move</span>
+        <span className="t-caption c-muted cs-hint">{ORDER.length} requests in the queue · ‹ › or J K to move</span>
         <label className="cs-role t-caption">
           <span className="c-muted">Viewing as</span>
           <select value={role} onChange={(e) => setRole(e.target.value as Role)}>
@@ -764,26 +766,30 @@ export default function Page() {
   );
 }
 
-function Sidebar() {
+function Sidebar({ needsYou }: { needsYou: number }) {
   const items: [string, IconName, boolean?][][] = [
-    [['Employee requests', 'grid', true], ['Analytics', 'chart'], ['Employee management', 'users'], ['Company settings', 'settings'], ['Travel calendar', 'calendar']],
-    [['My requests', 'file'], ['My calendar', 'calendar'], ['Policy overview', 'book']],
-    [['Tracking & alerts', 'map-pin']],
+    [['Employee requests', 'grid', true], ['Analytics', 'chart'], ['Employee management', 'users'], ['Company settings', 'settings']],
+    [['My requests', 'file'], ['Policy overview', 'book']],
   ];
-  const titles = ['Admin', 'My workspace', 'SOS'];
+  const titles = ['Admin management', 'My workspace'];
   return (
     <nav className="sidebar" aria-label="Main">
-      <div className="logo"><Logo /></div>
+      <div className="sidebar-head"><div className="logo"><Logo /></div><button className="icon-btn" aria-label="Collapse menu"><Icon name="menu" /></button></div>
       {items.map((g, gi) => (
         <div key={gi} className="nav-group">
           <div className="nav-title t-overline">{titles[gi]}</div>
           {g.map(([label, icon, active]) => (
-            <a key={label} href="#" onClick={(e) => e.preventDefault()} className={`nav-item t-label-m ${active ? 'active' : ''}`} style={{ textDecoration: 'none' }}>
-              <Icon name={icon} /> {label} {active && <span className="count t-label-s">3</span>}
+            <a key={label} href="#" onClick={(e) => e.preventDefault()} className={`nav-item t-label-m ${active ? 'active' : ''}`} style={{ textDecoration: 'none' }} aria-current={active ? 'page' : undefined}>
+              <Icon name={icon} /> {label}
+              {active && <span className="count t-label-s" aria-label={`${needsYou} requests need you`}>{needsYou}</span>}
             </a>
           ))}
         </div>
       ))}
+      <div className="sidebar-foot">
+        <button className="chat-fab" aria-label="Open chat"><Icon name="message" size={20} /></button>
+        <span className="t-label-m">Laura Müller</span><Icon name="chevron-right" size={12} />
+      </div>
     </nav>
   );
 }
