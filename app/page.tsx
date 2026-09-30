@@ -572,8 +572,7 @@ export default function Page() {
                           <p className={`conf ${needsYou || !approvable ? 'warn' : ''}`}>{needsYou || !approvable ? '! ' : '✓ '}{assess.data.confidenceNote} Last check {shortDay(req.today)}, {new Date(assess.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}.</p>
                           <div className="src-line">
                             <span>Summary by the agent</span><span aria-hidden="true">·</span>
-                            <button className="link-btn" onClick={() => showToast(`Sources: ${assess.data.sources.join(', ')}`)}>Sources</button><span aria-hidden="true">·</span>
-                            <button className="link-btn agent-settings-link" onClick={() => { lastFocus.current = document.activeElement as HTMLElement; setOpen(false); setView('settings'); }}><Icon name="settings" size={14} /> Agent settings</button>
+                            <button className="link-btn" onClick={() => showToast(`Sources: ${assess.data.sources.join(', ')}`)}>Sources</button>
                           </div>
                         </>
                       )}
