@@ -29,7 +29,7 @@ function rawChecks(r: WorkationRequest): Check[] {
 export function canApprove(r: WorkationRequest) {
   const stepsOk = r.steps.every((s) => s.state === 'Done' || s.state === 'Needs you');
   const blocking = ruleChecks(r).some((c) => c.severity === 'blocking');
-  const waiting = r.steps.some((s) => s.state === 'Working' || s.state === 'Waiting' || s.state === 'Blocked');
+  const waiting = r.steps.some((s) => s.state === 'Working' || s.state === 'Waiting' || s.state === 'Overdue' || s.state === 'Blocked');
   return stepsOk && !blocking && !waiting;
 }
 

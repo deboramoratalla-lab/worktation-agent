@@ -305,7 +305,7 @@ export default function Page() {
   // Rule checks always show. The agent's anomalies add to them, never replace them.
   // Date conflicts use the fixed Figma copy, never AI text. One banner covers both date rules.
   const pastDates = checks.some((c) => c.id === 'past-dates');
-  type Banner = { title: string; detail: string; action: string; by: string; kind: 'dates' | 'rule' | 'info' | 'agent' };
+  type Banner = { title: string; detail: string; action: string; by: string; kind: 'dates' | 'rule' | 'info' | 'agent' | 'error' };
   const tripYear = Number(req.dates.start.slice(0, 4));
   const banners: Banner[] = [
     // Rules are deterministic: show them at once, even while the agent is still checking
@@ -389,7 +389,13 @@ export default function Page() {
                     <Icon name="more-vertical" /> Actions
                   </button>
                   {menu && (
-                    <div className="menu" role="menu">
+                    <div className="menu" role="menu" onKeyDown={(e) => {
+                      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+                      e.preventDefault();
+                      const items = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+                      const i = items.indexOf(document.activeElement as HTMLElement);
+                      items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus();
+                    }}>
                       <button role="menuitem" onClick={openDates}><Icon name="calendar" /> Change dates</button>
                       <button role="menuitem" onClick={() => openDraft('message')}><Icon name="message" /> Message {firstName}</button>
                       <hr />
@@ -404,7 +410,7 @@ export default function Page() {
                   {banners.some((b) => !dismissed[b.title]) && (
                   <div className="alerts">
                   {banners.filter((b) => !dismissed[b.title]).map((b) => (
-                    <div key={b.title} className={`alert ${b.kind === 'info' ? 'info' : ''}`} role="status">
+                    <div key={b.title} className={`alert ${b.kind === 'info' ? 'info' : b.kind === 'error' ? 'error' : ''}`} role={b.kind === 'error' ? 'alert' : 'status'}>
                       <span className="ic"><Icon name="alert" size={20} /></span>
                       <div className="alert-text">
                         <p className="t-heading-s">{b.title}</p>
@@ -788,7 +794,7 @@ function RiskBadge({ level }: { level: Level }) {
 
 function PathStep({ step, onReview }: { step: Step; onReview?: () => void }) {
   const cls = step.state === 'Needs you' ? 'Needs' : step.state;
-  const icon: Partial<Record<Step['state'], IconName>> = { Done: 'check', 'Needs you': 'alert', Blocked: 'close', Waiting: 'clock' };
+  const icon: Partial<Record<Step['state'], IconName>> = { Done: 'check', 'Needs you': 'alert', Blocked: 'close', Waiting: 'clock', Overdue: 'alert' };
   return (
     <li className="step">
       <span className={`step-ic ${cls}`}>{icon[step.state] ? <Icon name={icon[step.state]!} size={14} /> : null}</span>
@@ -797,8 +803,8 @@ function PathStep({ step, onReview }: { step: Step; onReview?: () => void }) {
           <span className="t-label-m c-secondary">{step.title}</span>
           <span className={`owner ${step.owner}`}>{step.owner}</span>
         </div>
-        <span className="t-caption c-secondary">{step.meta}</span>
-        {step.state === 'Waiting' && step.owner === 'Approver' && onReview && (
+        <span className={`t-caption ${step.state === 'Overdue' ? 'step-meta-overdue' : 'c-secondary'}`}>{step.meta}</span>
+        {(step.state === 'Waiting' || step.state === 'Overdue') && step.owner === 'Approver' && onReview && (
           <button className="agent-proposal" onClick={onReview}><span className="agent-chip">Agent</span> Drafted a reminder · <span className="c-link">Review</span></button>
         )}
         <span className="sr-only">Status: {step.state}</span>

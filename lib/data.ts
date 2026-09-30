@@ -2,7 +2,7 @@
 // Risk levels come from the rules engine, never from the model.
 
 export type Level = 'Low' | 'Medium' | 'High';
-export type StepState = 'Done' | 'Working' | 'Waiting' | 'Needs you' | 'Blocked';
+export type StepState = 'Done' | 'Working' | 'Waiting' | 'Overdue' | 'Needs you' | 'Blocked';
 export type Owner = 'Approver' | 'Employee' | 'WorkFlex' | 'Agent' | 'You';
 
 export type RiskDimension = { id: string; name: string; level: Level; why: string; rule: string };
@@ -103,7 +103,7 @@ export const scenarios: Record<ScenarioId, { label: string; build: () => Workati
       r.today = '2026-04-03';
       r.risks[1] = { ...r.risks[1], level: 'High', why: 'No business visa yet. Remote work on a tourist entry is not allowed in Thailand.' };
       r.steps[1] = { ...r.steps[1], owner: 'Agent', state: 'Working', meta: 'Agent asked Lili · 1 Apr' };
-      r.steps[3] = { ...r.steps[3], state: 'Waiting', meta: 'Anna Roth · no reply since 31 Mar' };
+      r.steps[3] = { ...r.steps[3], state: 'Overdue', meta: 'Anna Roth · no reply since 31 Mar · overdue' };
       r.documents[0] = { ...r.documents[0], meta: 'Requested by the agent · 1 Apr', status: 'requested' };
       r.activity = r.activity.filter((a) => !['a-recheck', 'a-it'].includes(a.id));
       r.sourceChecks[1].status = 'missing';
