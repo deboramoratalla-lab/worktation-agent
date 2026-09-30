@@ -570,7 +570,7 @@ export default function Page() {
                           <div className="src-line">
                             <span>Summary by the agent</span><span aria-hidden="true">·</span>
                             <button className="link-btn" onClick={() => showToast(`Sources: ${assess.data.sources.join(', ')}`)}>Sources</button><span aria-hidden="true">·</span>
-                            <button className="link-btn" onClick={() => { lastFocus.current = document.activeElement as HTMLElement; setDialog({ kind: 'settings' }); }}>Agent settings</button>
+                            <button className="link-btn agent-settings-link" onClick={() => { lastFocus.current = document.activeElement as HTMLElement; setDialog({ kind: 'settings' }); }}><Icon name="settings" size={14} /> Agent settings</button>
                           </div>
                         </>
                       )}

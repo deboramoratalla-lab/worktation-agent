@@ -371,3 +371,5 @@ body { padding-top: 40px; }
 .level.Only-you { background: var(--color-bg-brand-subtle); color: var(--color-text-brand); }
 .btn-ghost-danger:hover { background: var(--color-status-risk-high-bg); }
 @media (max-width: 599px) { .crumb-hide { display: none; } }
+
+.agent-settings-link { display: inline-flex; align-items: center; gap: 4px; }

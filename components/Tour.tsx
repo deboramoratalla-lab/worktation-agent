@@ -12,6 +12,7 @@ export const TOUR: TourStep[] = [
   { scenario: 'ready', target: '.pta .steps', chapter: 'Laura decides', title: 'What is left, and who owns it', body: 'Every step has an owner. Approve unlocks by rules in code, never by the AI.' },
   { scenario: 'ready', target: '.risk-row', chapter: 'Laura decides', title: 'Risk, explained', body: 'Why it is flagged and which rule it comes from, so the decision holds up in an audit.' },
   { scenario: 'ready', target: '.activity', chapter: 'Laura decides', title: 'One audit trail', body: 'Decisions, notes and every agent action in one log, each with a reason. Agent actions can be undone.' },
+  { scenario: 'ready', target: '.agent-settings-link', chapter: 'Laura decides', title: 'You set the agent\'s limits', body: 'What it does on its own and what it must ask first. Approve, reject and cancel are always yours.' },
   { scenario: 'working', target: '.pta .steps', chapter: 'The agent works', title: 'It chases', body: 'Suba has no business visa yet. The agent asked for it and will remind the approver. Nothing for Laura to do, so Approve stays locked.' },
   { scenario: 'check', target: '.pta .steps', chapter: 'The agent works', title: "It says when it couldn't check", body: 'The issuer did not respond, so the step goes back to Laura. She can still approve, with a note on what she checked.' },
   { scenario: 'conflict', target: '.alerts', chapter: 'The agent works', title: 'It catches bad data', body: 'Trip dates before the request date, days counted in the wrong year. Approval pauses until it is fixed.' },
