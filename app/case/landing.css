@@ -156,3 +156,5 @@ html { scroll-behavior: smooth; scroll-padding-top: 72px; }
 .lp-nav-cta { opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .2s ease, transform .2s ease, visibility .2s; }
 .is-past-hero .lp-nav-cta { opacity: 1; visibility: visible; transform: none; }
 @media (prefers-reduced-motion: reduce) { .lp-nav-cta { transition: none; } }
+/* Dark section: no highlighter (white on yellow fails contrast). Yellow text on teal is about 8:1. */
+.lp-dark .lp-mark { background: none; color: var(--color-yellow-400); padding: 0; margin: 0; }
