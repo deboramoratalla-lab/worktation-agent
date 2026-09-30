@@ -5,7 +5,7 @@ import { Icon, Logo, ShieldSolid, type IconName } from '@/components/Icon';
 import { scenarios, type ActivityEntry, type Level, type ScenarioId, type Step, type WorkationRequest } from '@/lib/data';
 import { canApprove, ruleChecks, type Assessment } from '@/lib/agent';
 import { Tour, TOUR } from '@/components/Tour';
-import { applyEdits, datesLabel, editsKey, formatDay, workingDays, type Edits } from '@/lib/scenario';
+import { applyEdits, datesLabel, shortDay, editsKey, formatDay, workingDays, type Edits } from '@/lib/scenario';
 
 const ORDER: ScenarioId[] = ['ready', 'working', 'check', 'conflict'];
 const rank: Record<Level, number> = { Low: 0, Medium: 1, High: 2 };
@@ -55,6 +55,8 @@ export default function Page() {
   const ed = useMemo<Edits>(() => edits[scenario] ?? {}, [edits, scenario]);
   const edKey = editsKey(ed);
   const req = useMemo<WorkationRequest>(() => applyEdits(baseReq, ed), [baseReq, ed]);
+  // The demo runs on the request's own calendar (req.today), not the machine clock, so the log stays in order.
+  const at = () => `${shortDay(req.today)}, ${now()}`;
   const [activity, setActivity] = useState<ActivityEntry[]>(req.activity);
   const [assess, setAssess] = useState<AssessState>({ status: 'loading' });
   const [approved, setApproved] = useState(false);
@@ -114,11 +116,11 @@ export default function Page() {
       if (!res.ok) throw new Error(json.error);
       assessCache.current[ck] = { data: json.assessment, model: json.model, at: json.at };
       setAssess({ status: 'ok', data: json.assessment, model: json.model, at: json.at });
-      log({ kind: 'agent', title: 'Agent checked the request', body: json.assessment.summary, time: `Today, ${now()} · auto`, source: json.assessment.sources.join(', ') });
+      log({ kind: 'agent', title: 'Agent checked the request', body: json.assessment.summary, time: `${at()} · auto`, source: json.assessment.sources.join(', ') });
     } catch {
       if (run !== assessRun.current) return;
       setAssess({ status: 'error' });
-      log({ kind: 'agent-failed', title: "Agent couldn't run the check", body: 'The summary below is missing. Rules still decide if Approve is available.', time: `Today, ${now()} · auto` });
+      log({ kind: 'agent-failed', title: "Agent couldn't run the check", body: 'The summary below is missing. Rules still decide if Approve is available.', time: `${at()} · auto` });
     }
   }, [log]);
 
@@ -205,10 +207,10 @@ export default function Page() {
   function confirmDates() {
     const sc = scenario, prev = ed;
     setEdits((all) => ({ ...all, [sc]: { ...prev, confirmed: [...new Set([...(prev.confirmed ?? []), 'past-dates'])] } }));
-    log({ kind: 'decision', title: 'You confirmed the dates are correct', body: `Trip ${req.dates.label}. This rule no longer pauses Approve.`, time: `Today, ${now()}`, source: 'Rule: trip dates before the request was submitted (past-dates)' });
+    log({ kind: 'decision', title: 'You confirmed the dates are correct', body: `Trip ${req.dates.label}. This rule no longer pauses Approve.`, time: `${at()}`, source: 'Rule: trip dates before the request was submitted (past-dates)' });
     showToast('Dates confirmed. The agent is re-checking the request.', () => {
       setEdits((all) => ({ ...all, [sc]: prev }));
-      log({ kind: 'decision', title: 'You undid the date confirmation', time: `Today, ${now()}` });
+      log({ kind: 'decision', title: 'You undid the date confirmation', time: `${at()}` });
     });
   }
   function openDates() {
@@ -221,10 +223,10 @@ export default function Page() {
     const changedDays = workingDays(start, end) !== req.workingDays;
     setEdits((all) => ({ ...all, [sc]: { dates: { start, end }, reopen: changedDays ? ['mgr'] : [] } }));
     closeDialog();
-    log({ kind: 'decision', title: `You changed the dates to ${datesLabel(start, end)}`, body: `Before: ${before}.${changedDays ? ' Manager approval reopens.' : ''} The agent re-checks the risk.`, time: `Today, ${now()}` });
+    log({ kind: 'decision', title: `You changed the dates to ${datesLabel(start, end)}`, body: `Before: ${before}.${changedDays ? ' Manager approval reopens.' : ''} The agent re-checks the risk.`, time: `${at()}` });
     showToast(`Dates changed. ${firstName} and Tom were notified.`, () => {
       setEdits((all) => ({ ...all, [sc]: prev }));
-      log({ kind: 'decision', title: 'You undid the change of dates', time: `Today, ${now()}` });
+      log({ kind: 'decision', title: 'You undid the change of dates', time: `${at()}` });
     });
   }
 
@@ -241,7 +243,7 @@ export default function Page() {
       `Days in ${req.to.country}, ${year}: ${before + thisTrip} of ${limit}`,
       assess.status === 'ok' ? `Agent summary saved as shown: “${assess.data.headline}. ${assess.data.summary}”` : 'Agent summary: not available, the agent couldn’t run the check',
     ];
-    const time = `Today, ${now()}`;
+    const time = `${at()}`;
     log({ kind: 'decision', title: 'Decision snapshot', body: 'What you saw when you decided', time, snapshot });
     log({ ...entry, time });
   }
@@ -258,22 +260,22 @@ export default function Page() {
     closeDialog();
     setApproved(true);
     setNoCoverage(variant === 'no-coverage');
-    if (variant === 'no-coverage') log({ kind: 'agent', title: 'Agent keeps chasing the business visa', body: 'The visa step stays with the agent. WorkFlex coverage starts when the visa is issued.', time: `Today, ${now()} · auto` });
+    if (variant === 'no-coverage') log({ kind: 'agent', title: 'Agent keeps chasing the business visa', body: 'The visa step stays with the agent. WorkFlex coverage starts when the visa is issued.', time: `${at()} · auto` });
     logDecision(variant === 'no-coverage'
       ? { kind: 'decision', title: 'You approved without WorkFlex coverage', body: `Reason: ${reason}\n${checksLine}`, time: '', source: 'Work entitlement: high risk, business visa not issued (WE_TH_03)' }
       : { kind: 'decision', title: 'You approved without a verified A1 certificate', body: `Reason: ${reason}\n${checksLine}`, time: '', source: 'Social security: A1 not verified with the issuer (BT_WE_12)' });
     showToast(variant === 'no-coverage' ? `Approved without coverage. ${firstName} and Tom were notified.` : `Request approved. ${firstName} and Tom were notified.`, () => {
       setApproved(false);
       setNoCoverage(false);
-      log({ kind: 'decision', title: 'You undid the approval', body: 'The decision and its snapshot stay in the log.', time: `Today, ${now()}` });
+      log({ kind: 'decision', title: 'You undid the approval', body: 'The decision and its snapshot stay in the log.', time: `${at()}` });
     });
   }
   function sendToGlobalMobility() {
     setSentToGM(true);
-    log({ kind: 'decision', title: 'You sent the request to Global Mobility', body: 'Approving past a rule needs Global Mobility. They get the request with its current risk and sources.', time: `Today, ${now()}`, source: 'Permission: only Global Mobility can approve past a rule' });
+    log({ kind: 'decision', title: 'You sent the request to Global Mobility', body: 'Approving past a rule needs Global Mobility. They get the request with its current risk and sources.', time: `${at()}`, source: 'Permission: only Global Mobility can approve past a rule' });
     showToast('Sent to Global Mobility.', () => {
       setSentToGM(false);
-      log({ kind: 'decision', title: 'You took the request back from Global Mobility', time: `Today, ${now()}` });
+      log({ kind: 'decision', title: 'You took the request back from Global Mobility', time: `${at()}` });
     });
   }
 
@@ -282,7 +284,7 @@ export default function Page() {
     logDecision({ kind: 'decision', title: 'You approved the request', time: '' });
     showToast(`Request approved. ${firstName} and Tom were notified.`, () => {
       setApproved(false);
-      log({ kind: 'decision', title: 'You undid the approval', body: 'The decision and its snapshot stay in the log.', time: `Today, ${now()}` });
+      log({ kind: 'decision', title: 'You undid the approval', body: 'The decision and its snapshot stay in the log.', time: `${at()}` });
     });
   }
 
@@ -295,7 +297,7 @@ export default function Page() {
     try {
       const full = await streamText('/api/ask', { scenario, question: q, edits: ed }, (t) => setAnswer({ q, text: t, streaming: true }));
       setAnswer({ q, text: full, streaming: false });
-      log({ kind: 'agent', title: `Agent answered: “${q}”`, body: full, time: `Today, ${now()} · on request` });
+      log({ kind: 'agent', title: `Agent answered: “${q}”`, body: full, time: `${at()} · on request` });
     } catch {
       setAnswer({ q, text: "The agent couldn't answer right now. Try again in a moment.", streaming: false, error: true });
     }
@@ -421,7 +423,7 @@ export default function Page() {
                         <div className="alert-meta t-caption">
                           {b.kind === 'agent' && <span style={{ color: 'var(--color-agent-fg)', display: 'inline-flex' }}><Icon name="sparkle" size={12} /></span>}
                           <span style={{ color: b.kind === 'agent' ? 'var(--color-agent-fg)' : undefined }}>{b.by}</span><span aria-hidden="true">·</span>
-                          <button className="link-btn t-caption" onClick={() => { setDismissed((d) => ({ ...d, [b.title]: true })); log({ kind: 'decision', title: `You dismissed a flag: ${b.title}`, time: `Today, ${now()}` }); }}>Dismiss</button>
+                          <button className="link-btn t-caption" onClick={() => { setDismissed((d) => ({ ...d, [b.title]: true })); log({ kind: 'decision', title: `You dismissed a flag: ${b.title}`, time: `${at()}` }); }}>Dismiss</button>
                         </div>
                       </div>
                       {b.kind === 'dates' && (
@@ -489,7 +491,7 @@ export default function Page() {
                       <p className="t-heading-s">Activity</p>
                       <button className="btn btn-ghost"><Icon name="download" /> Export audit pack</button>
                     </div>
-                    <form className="note-input" onSubmit={(e) => { e.preventDefault(); if (!note.trim()) return; log({ kind: 'comment', title: 'You added a note', body: note.trim(), time: `Today, ${now()}` }); setNote(''); }}>
+                    <form className="note-input" onSubmit={(e) => { e.preventDefault(); if (!note.trim()) return; log({ kind: 'comment', title: 'You added a note', body: note.trim(), time: `${at()}` }); setNote(''); }}>
                       <label htmlFor="note" className="sr-only">Add a note for the record</label>
                       <input id="note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note for the record…" />
                       <button className="btn btn-ghost" type="submit">Save</button>
@@ -506,7 +508,7 @@ export default function Page() {
                               <span className="t-caption c-muted">{a.time}</span>
                               {/* Undo never edits the original: it adds a new entry */}
                               {a.undoable && !undone[a.id] && (
-                                <button className="link-btn t-label-s" onClick={() => { setUndone((u) => ({ ...u, [a.id]: true })); log({ kind: 'decision', title: 'You undid an agent action', body: a.title, time: `Today, ${now()}` }); }}>Undo</button>
+                                <button className="link-btn t-label-s" onClick={() => { setUndone((u) => ({ ...u, [a.id]: true })); log({ kind: 'decision', title: 'You undid an agent action', body: a.title, time: `${at()}` }); }}>Undo</button>
                               )}
                               {a.kind === 'agent-failed' && scenario === 'check' && a.id === 'a-fail' && (
                                 <button className="link-btn t-label-s" onClick={() => { setScenario('ready'); showToast('Agent is trying again.'); }}>Try again</button>
@@ -550,7 +552,7 @@ export default function Page() {
                         <>
                           <p className="t-heading-m">{assess.data.headline}</p>
                           <p className="c-secondary">{assess.data.summary}</p>
-                          <p className={`conf ${needsYou || !approvable ? 'warn' : ''}`}>{needsYou || !approvable ? '! ' : '✓ '}{assess.data.confidenceNote} Last check today, {new Date(assess.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}.</p>
+                          <p className={`conf ${needsYou || !approvable ? 'warn' : ''}`}>{needsYou || !approvable ? '! ' : '✓ '}{assess.data.confidenceNote} Last check {shortDay(req.today)}, {new Date(assess.at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}.</p>
                           <div className="src-line">
                             <span>Summary by the agent</span><span aria-hidden="true">·</span>
                             <button className="link-btn" onClick={() => showToast(`Sources: ${assess.data.sources.join(', ')}`)}>Sources</button><span aria-hidden="true">·</span>
@@ -701,7 +703,7 @@ export default function Page() {
               <p className="c-secondary">{firstName} and Tom are notified. The approvals already given are kept in Activity. This can&apos;t be undone.</p>
               <div className="dialog-actions">
                 <button className="btn btn-secondary" autoFocus onClick={closeDialog}>Keep request</button>
-                <button className="btn btn-danger" onClick={() => { closeDialog(); log({ kind: 'decision', title: 'You cancelled the request', time: `Today, ${now()}` }); showToast('Request cancelled.'); }}>Cancel request</button>
+                <button className="btn btn-danger" onClick={() => { closeDialog(); log({ kind: 'decision', title: 'You cancelled the request', time: `${at()}` }); showToast('Request cancelled.'); }}>Cancel request</button>
               </div>
             </>
           ) : (
@@ -731,10 +733,10 @@ export default function Page() {
                   <button className="btn btn-danger" disabled={!dialog.text.trim() || dialog.streaming} onClick={() => { closeDialog(); logDecision({ kind: 'decision', title: 'You rejected the request', body: dialog.text, time: '' }); showToast(`Request rejected. ${firstName} and Tom were notified.`); }}>Reject request</button>
                 )}
                 {dialog.kind === 'reminder' && (
-                  <button className="btn btn-primary" disabled={!dialog.text.trim() || dialog.streaming} onClick={() => { closeDialog(); log({ kind: 'comment', title: 'You sent the agent’s reminder to Anna Roth', body: dialog.text, time: `Today, ${now()}`, source: 'Rule: remind approvers after 2 days (Ask me)' }); showToast('Reminder sent to Anna Roth.'); }}><Icon name="send" /> Send reminder</button>
+                  <button className="btn btn-primary" disabled={!dialog.text.trim() || dialog.streaming} onClick={() => { closeDialog(); log({ kind: 'comment', title: 'You sent the agent’s reminder to Anna Roth', body: dialog.text, time: `${at()}`, source: 'Rule: remind approvers after 2 days (Ask me)' }); showToast('Reminder sent to Anna Roth.'); }}><Icon name="send" /> Send reminder</button>
                 )}
                 {dialog.kind === 'message' && (
-                  <button className="btn btn-primary" disabled={!dialog.text.trim() || dialog.streaming} onClick={() => { closeDialog(); log({ kind: 'comment', title: `You messaged ${firstName}`, body: dialog.text, time: `Today, ${now()}` }); showToast('Message sent.'); }}><Icon name="send" /> Send</button>
+                  <button className="btn btn-primary" disabled={!dialog.text.trim() || dialog.streaming} onClick={() => { closeDialog(); log({ kind: 'comment', title: `You messaged ${firstName}`, body: dialog.text, time: `${at()}` }); showToast('Message sent.'); }}><Icon name="send" /> Send</button>
                 )}
               </div>
             </>

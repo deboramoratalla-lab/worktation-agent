@@ -69,3 +69,6 @@ export function loadScenario(id: unknown, edits?: unknown) {
   const key = (typeof id === 'string' && id in scenarios ? id : 'ready') as ScenarioId;
   return applyEdits(scenarios[key].build(), cleanEdits(edits));
 }
+
+// '4 Apr' for an ISO date; used to stamp log entries on the request's own calendar.
+export const shortDay = (iso: string) => { const d = parse(iso); return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`; };

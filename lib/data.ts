@@ -127,6 +127,7 @@ export const scenarios: Record<ScenarioId, { label: string; build: () => Workati
     build: () => {
       const r = clone(base);
       r.dates = { start: '2024-05-06', end: '2024-05-10', label: '6 to 10 May 2024' };
+      r.activity.push({ id: 'a-dates', kind: 'agent', title: 'Agent paused the approval', body: 'Trip ended 10 May 2024, request created 31 Mar 2026. Paused approval and asked you to confirm.', time: '31 Mar, 10:03 · auto' });
       return as(r, 'Mara Klein', 'W-ZK40RB');
     },
   },
