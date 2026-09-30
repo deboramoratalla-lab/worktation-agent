@@ -337,7 +337,7 @@ export default function Page() {
   return (
     <>
       <div className="shell" aria-hidden={open}>
-        <Sidebar needsYou={needsYouCount} />
+        <Sidebar needsYou={needsYouCount} user={role === 'gm' ? 'Laura Müller' : 'Nina Weber'} />
         <main className="list">
           <p className="t-heading-l">Employee requests</p>
           <div className="tabs t-label-m"><span className="tab-active"><Icon name="briefcase" /> Workations <span className="pill">{ORDER.length}</span></span></div>
@@ -784,7 +784,7 @@ export default function Page() {
   );
 }
 
-function Sidebar({ needsYou }: { needsYou: number }) {
+function Sidebar({ needsYou, user }: { needsYou: number; user: string }) {
   const items: [string, IconName, boolean?][][] = [
     [['Employee requests', 'grid', true], ['Analytics', 'chart'], ['Employee management', 'users'], ['Company settings', 'settings']],
     [['My requests', 'file'], ['Policy overview', 'book']],
@@ -806,7 +806,7 @@ function Sidebar({ needsYou }: { needsYou: number }) {
       ))}
       <div className="sidebar-foot">
         <button className="chat-fab" aria-label="Open chat"><Icon name="message" size={20} /></button>
-        <span className="t-label-m">Laura Müller</span><Icon name="chevron-right" size={12} />
+        <span className="t-label-m">{user}</span><Icon name="chevron-right" size={12} />
       </div>
     </nav>
   );
