@@ -807,6 +807,12 @@ const SETTING_GROUPS: { title: string; note: string; rows: [string, string, Leve
   ] },
 ];
 
+const SETTINGS_NAV: [string, string[]][] = [
+  ['Company', ['General', 'Users and roles', 'Billing']],
+  ['Workations', ['Policy rules', 'Countries and tax', 'Approval flow', 'Agent', 'Notifications']],
+  ['Security', ['Audit log', 'Integrations', 'Single sign-on']],
+];
+
 function AgentSettings({ onBack, onSaved }: { onBack: () => void; onSaved: (m: string) => void }) {
   const initial = Object.fromEntries(SETTING_GROUPS.flatMap((g) => g.rows.map(([n, , l]) => [n, l]))) as Record<string, Level3>;
   const [saved, setSaved] = useState(initial);
@@ -814,7 +820,20 @@ function AgentSettings({ onBack, onSaved }: { onBack: () => void; onSaved: (m: s
   const dirty = Object.keys(initial).some((k) => saved[k] !== draft[k]);
   return (
     <main className="list settings-page">
-      <p className="t-caption c-secondary">Company settings / Workations</p>
+      <p className="t-heading-l">Company settings</p>
+      <div className="sp-shell">
+        <nav className="sp-nav" aria-label="Company settings">
+          {SETTINGS_NAV.map(([group, items]) => (
+            <div key={group} className="sp-navgroup">
+              <div className="nav-title t-label-s">{group}</div>
+              {items.map((i) => i === 'Agent'
+                ? <a key={i} href="#" className="nav-item t-label-m active" aria-current="page" onClick={(e) => e.preventDefault()}>{i}</a>
+                : <a key={i} href="#" className="nav-item t-label-m" onClick={(e) => { e.preventDefault(); onSaved('Not part of this case study. Only Agent settings is designed.'); }}>{i}</a>)}
+            </div>
+          ))}
+        </nav>
+        <div className="sp-content">
+      <p className="t-caption c-secondary">Company settings / Workations / Agent</p>
       <h1 className="t-heading-l" style={{ margin: 0 }}>Agent settings</h1>
       <p className="c-secondary">Choose what the agent does on its own for Workation requests. It prepares, chases and checks. You decide.</p>
       <div className="sp-grid">
@@ -861,6 +880,8 @@ function AgentSettings({ onBack, onSaved }: { onBack: () => void; onSaved: (m: s
             <p className="t-caption c-secondary">Who changed what and when is saved with the company audit log. New settings apply from the next agent action.</p>
           </section>
         </aside>
+      </div>
+        </div>
       </div>
     </main>
   );
