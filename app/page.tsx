@@ -788,8 +788,8 @@ function Sidebar() {
   );
 }
 
-function RiskBadge({ level }: { level: Level }) {
-  return <span className={`badge ${level}`}><ShieldSolid /> {level} risk</span>;
+function RiskBadge({ level }: { level: Level | 'Pending' }) {
+  return <span className={`badge ${level}`}><ShieldSolid /> {level === 'Pending' ? 'Risk pending' : `${level} risk`}</span>;
 }
 
 function PathStep({ step, onReview }: { step: Step; onReview?: () => void }) {

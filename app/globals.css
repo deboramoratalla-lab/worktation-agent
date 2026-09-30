@@ -158,6 +158,7 @@ body { padding-top: 40px; }
 .badge { height: 24px; display: inline-flex; gap: 8px; align-items: center; padding: 0 8px; border-radius: var(--radius-full); font-size: 12px; line-height: 16px; font-weight: 500; white-space: nowrap; }
 .badge.Low { background: var(--risk-badge-low-bg); color: var(--risk-badge-low-fg); }
 .badge.Medium { background: var(--risk-badge-medium-bg); color: var(--risk-badge-medium-fg); }
+.badge.Pending { background: var(--color-bg-canvas); color: var(--color-text-secondary); }
 .badge.High { background: var(--risk-badge-high-bg); color: var(--risk-badge-high-fg); }
 .risk-row { border-top: 1px solid var(--color-border-default); padding: 16px 24px; display: flex; flex-direction: column; gap: 16px; }
 .risk-row.open { background: var(--color-bg-subtle); }
