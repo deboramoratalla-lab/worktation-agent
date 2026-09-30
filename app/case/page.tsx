@@ -131,7 +131,16 @@ export default function Landing() {
         </section>
 
         <section id="try" className="lp-sec" aria-labelledby="h-try">
-          <h2 id="h-try"><span className="lp-hi"><Icon name="arrow-right" size={20} /></span>Try four requests</h2>
+          <h2 id="h-try"><span className="lp-hi"><Icon name="arrow-right" size={20} /></span>Try the live prototype</h2>
+          <div className="lp-intro">
+            <p className="lp-lead-sm"><strong>This is a working prototype, not a set of screens.</strong> You play Laura and handle four requests. The agent reads each one and writes its summary as you open it, it drafts reminders, and it answers questions about the case. Approve, reject, undo and the audit trail all work.</p>
+            <ul className="lp-facts">
+              <li><Icon name="sparkle" size={18} /><span><b>Live AI</b>Summaries, drafts and answers are generated when you open a request.</span></li>
+              <li><Icon name="users" size={18} /><span><b>You decide</b>The agent never approves or rejects. Every action can be undone.</span></li>
+              <li><Icon name="file" size={18} /><span><b>Sample data</b>The requests are made up. The risk results are sample data, not a real check.</span></li>
+            </ul>
+            <p className="lp-cap">Pick one to start. Each case shows a different situation.</p>
+          </div>
           <ul className="lp-cards lp-cards-4">
             {CASES.map(([n, s, b]) => (
               <li key={n}><a className="lp-case" href={`/?s=${s}`}>

@@ -117,3 +117,8 @@ main, .lp-foot { max-width: var(--w); margin: 0 auto; padding: 0 16px; }
 .lp { overflow-x: clip; }
 .lp-stats { margin-bottom: 0; }
 @media (max-width: 900px) { .lp-toast { left: 0; } .lp-ai { right: 0; } .lp-blob-a { right: 0; width: 240px; height: 240px; } .lp-stats b { font-size: 32px; } }
+.lp-intro { margin-bottom: 24px; } .lp-intro .lp-lead-sm { margin-bottom: 24px; max-width: 70ch; } .lp-intro .lp-lead-sm strong { color: var(--color-text-primary); }
+.lp-facts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.lp-facts li { display: flex; gap: 12px; align-items: flex-start; padding: 16px; border-radius: var(--radius-lg); background: var(--color-mint-100); color: var(--color-text-secondary); font-size: 14px; line-height: 20px; }
+.lp-facts svg { flex: none; color: var(--color-green-700); margin-top: 2px; } .lp-facts b { display: block; color: var(--color-text-primary); }
+@media (max-width: 800px) { .lp-facts { grid-template-columns: 1fr; } }
