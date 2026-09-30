@@ -807,7 +807,8 @@ const SETTING_GROUPS: { title: string; note: string; rows: [string, string, Leve
   ] },
 ];
 
-const SETTINGS_TABS = ['General', 'Users and roles', 'Workation policy', 'Agent', 'Notifications', 'Audit log', 'Integrations'];
+// Tabs follow the WorkFlex Help Center (Platform setup). Only Agent is designed.
+const SETTINGS_TABS = ['Users and access', 'Entities', 'Policies', 'Workflow', 'Custom fields', 'Emails', 'Integrations', 'Agent'];
 
 function AgentSettings({ onBack, onSaved }: { onBack: () => void; onSaved: (m: string) => void }) {
   const initial = Object.fromEntries(SETTING_GROUPS.flatMap((g) => g.rows.map(([n, , l]) => [n, l]))) as Record<string, Level3>;
@@ -822,10 +823,10 @@ function AgentSettings({ onBack, onSaved }: { onBack: () => void; onSaved: (m: s
           {SETTINGS_TABS.map((i) => i === 'Agent'
             ? <a key={i} href="#" className="sp-tab active" aria-current="page" onClick={(e) => e.preventDefault()}>{i}</a>
             : <a key={i} href="#" className="sp-tab" onClick={(e) => { e.preventDefault(); onSaved('Not part of this case study. Only Agent settings is designed.'); }}>{i}</a>)}
-          <span className="t-caption c-secondary sp-tabsnote">Other tabs not designed. Structure assumed.</span>
+          <span className="t-caption c-secondary sp-tabsnote">Tabs from the WorkFlex Help Center. Only Agent is designed.</span>
         </nav>
         <div className="sp-content">
-      <p className="t-caption c-secondary">Company settings / Workations / Agent</p>
+      <p className="t-caption c-secondary">Company settings / Agent</p>
       <h1 className="t-heading-l" style={{ margin: 0 }}>Agent settings</h1>
       <p className="c-secondary">Choose what the agent does on its own for Workation requests. It prepares, chases and checks. You decide.</p>
       <div className="sp-grid">
