@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './landing.css';
+import { Icon, type IconName } from '@/components/Icon';
 
 export const metadata: Metadata = {
   title: 'Workation approval, case study',
@@ -11,6 +12,7 @@ const FIGMA = 'https://www.figma.com/design/cl9iO18ttAAfWUZpsvTJ0V';
 const fig = (node?: string) => (node ? `${FIGMA}?node-id=${node.replace(':', '-')}` : FIGMA);
 const PROTO = '/';
 
+const DEC_ICONS: IconName[] = ['clock', 'eye', 'calendar', 'check', 'close', 'file'];
 const DECISIONS = [
   { pain: 'Nobody knew what to do next', before: 'Status sat in a corner. No next step.', after: 'The header says what to do now: the agent’s suggestion, one main button and the reason.' },
   { pain: 'Risk was just a label', before: '“Medium risk” and a PDF to open.', after: 'Each risk says which check flagged it and why, with the source one click away.' },
@@ -20,6 +22,9 @@ const DECISIONS = [
   { pain: 'No history', before: 'No audit trail. Comments lived somewhere else.', after: 'One activity log with decisions, agent actions and comments together.' },
 ];
 
+const RULE_ICONS: IconName[] = ['users', 'sparkle', 'book', 'close', 'clock'];
+const USE_ICONS: IconName[] = ['eye', 'check', 'alert', 'send'];
+const PAGE_ICONS: IconName[] = ['book', 'chart', 'sparkle', 'grid', 'settings', 'eye', 'arrow-right', 'file', 'message'];
 const RULES = [
   ['Human decides', 'The agent suggests. Approve, reject and cancel are only Laura’s.'],
   ['Labelled', 'Anything the agent wrote says so.'],
@@ -35,6 +40,7 @@ const USES = [
   ['Drafts', 'Reminders and messages. Laura writes the rejection reason herself.'],
 ];
 
+const SCREEN_ICONS: IconName[] = ['grid', 'message', 'settings', 'menu'];
 const PAGES = [
   ['02 · Research', '0:1', 'The current screen and Laura, from the brief.'],
   ['03 · Synthesis & strategy', '8:6', 'Pain points ranked and what ships first.'],
@@ -61,6 +67,7 @@ const SCREENS = [
   ['Responsive', '171:5517', 'Tablet and mobile.'],
 ];
 
+const CASE_TAG: Record<string, [string, string]> = { ready: ['Ready', 'ok'], working: ['In progress', 'warn'], check: ['Needs a check', 'warn'], conflict: ['Conflict', 'bad'] };
 const CASES = [
   ['Lili', 'ready', 'All checks pass. Approve in one click, then undo it.'],
   ['Suba', 'working', 'The agent is still chasing a document. Laura can wait or approve without coverage.'],
@@ -95,35 +102,51 @@ export default function Landing() {
             </div>
             <p className="lp-meta">Concept by Debora Moratalla. Not a WorkFlex product. Sample data. The prototype is password protected: use the one I sent you.</p>
           </div>
-          <div className="lp-mock" aria-hidden="true">
+          <div className="lp-stage" aria-hidden="true">
+          <span className="lp-blob lp-blob-a" /><span className="lp-blob lp-blob-b" />
+          <div className="lp-toast"><Icon name="check" size={16} /><span>Approved by Laura</span><b>Undo</b></div>
+          <div className="lp-mock">
             <div className="lp-mock-head"><span className="lp-mock-chip">Ready to approve</span><span>Sample request</span></div>
             <p className="lp-mock-label">Summary by the agent · Sources</p>
             <p className="lp-mock-text">All checks pass. Documents are complete and the dates are in the future. Nothing needs your attention.</p>
             <div className="lp-mock-rows"><span>Social security</span><b>Low</b><span>Tax</span><b>Low</b><span>Documents</span><b>Complete</b></div>
             <div className="lp-mock-btns"><span className="lp-mock-b1">Approve</span><span className="lp-mock-b2">Reject</span></div>
           </div>
+          <div className="lp-ai"><Icon name="sparkle" size={16} /><span>Suggested by the agent. You decide.</span></div>
+          </div>
         </section>
+        <ul className="lp-stats" aria-label="At a glance">
+          <li><b>10</b><span>Figma pages</span></li>
+          <li><b>12</b><span>components</span></li>
+          <li><b>116</b><span>variables in 3 collections</span></li>
+          <li><b>4</b><span>clickable flows</span></li>
+        </ul>
 
         <section id="video" className="lp-sec" aria-labelledby="h-video">
-          <h2 id="h-video">Video</h2>
+          <h2 id="h-video"><span className="lp-hi"><Icon name="eye" size={20} /></span>Video</h2>
           <div className="lp-video" role="img" aria-label="Video placeholder">
-            <span>Video coming soon</span>
+            <span className="lp-play"><svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" /></svg></span><span>Video coming soon</span>
           </div>
           <p className="lp-cap">9 minutes. I explain first, then walk through the prototype, then the Figma file.</p>
         </section>
 
         <section id="try" className="lp-sec" aria-labelledby="h-try">
-          <h2 id="h-try">Try four requests</h2>
+          <h2 id="h-try"><span className="lp-hi"><Icon name="arrow-right" size={20} /></span>Try four requests</h2>
           <ul className="lp-cards lp-cards-4">
             {CASES.map(([n, s, b]) => (
-              <li key={n}><a href={`/?s=${s}`}><strong>{n}</strong><span>{b}</span></a></li>
+              <li key={n}><a className="lp-case" href={`/?s=${s}`}>
+                <span className="lp-avatar" aria-hidden="true">{n[0]}</span>
+                <span className="lp-case-body"><strong>{n}</strong><span>{b}</span></span>
+                <span className={`lp-pill lp-pill-${CASE_TAG[s][1]}`}>{CASE_TAG[s][0]}</span>
+                <Icon name="arrow-right" size={18} className="lp-go" />
+              </a></li>
             ))}
           </ul>
           <p className="lp-cap">Use the switch at the top to see the screen as Global Mobility or HR. Reload to reset a case. Also: <a href="/?v=settings">Company settings</a>.</p>
         </section>
 
         <section className="lp-sec" aria-labelledby="h-user">
-          <h2 id="h-user">Who it’s for</h2>
+          <h2 id="h-user"><span className="lp-hi"><Icon name="users" size={20} /></span>Who it’s for</h2>
           <div className="lp-two">
             <div>
               <p className="lp-big">Laura Müller, Global Mobility & Compliance Manager at a company with 1,000+ people.</p>
@@ -137,42 +160,38 @@ export default function Landing() {
         </section>
 
         <section id="decisions" className="lp-sec" aria-labelledby="h-dec">
-          <h2 id="h-dec">What changed on the screen</h2>
-          <div className="lp-table" role="table" aria-label="Before and after">
-            <div className="lp-row lp-head" role="row"><span role="columnheader">Problem</span><span role="columnheader">Before</span><span role="columnheader">After</span></div>
-            {DECISIONS.map((d) => (
-              <div className="lp-row" role="row" key={d.pain}>
-                <strong role="cell">{d.pain}</strong>
-                <span role="cell">{d.before}</span>
-                <span role="cell">{d.after}</span>
-              </div>
+          <h2 id="h-dec"><span className="lp-hi"><Icon name="check" size={20} /></span>What changed on the screen</h2>
+          <ul className="lp-dec">
+            {DECISIONS.map((d, i) => (
+              <li key={d.pain}>
+                <span className="lp-ico"><Icon name={DEC_ICONS[i]} size={22} /></span>
+                <h3>{d.pain}</h3>
+                <p className="lp-before"><span>Before</span>{d.before}</p>
+                <p className="lp-after"><span>Now</span>{d.after}</p>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
 
-        <section id="ai" className="lp-sec" aria-labelledby="h-ai">
-          <h2 id="h-ai">Where the AI helps, and where it stops</h2>
-          <div className="lp-two">
-            <div>
-              <h3>What it does</h3>
-              <ul className="lp-list">{USES.map(([t, b]) => (<li key={t}><strong>{t}</strong>{b}</li>))}</ul>
-            </div>
-            <div>
-              <h3>Rules it follows</h3>
-              <ol className="lp-list lp-num">{RULES.map(([t, b]) => (<li key={t}><strong>{t}</strong>{b}</li>))}</ol>
-            </div>
+        <section id="ai" className="lp-band" aria-labelledby="h-ai">
+          <div className="lp-band-in">
+            <h2 id="h-ai"><span className="lp-hi lp-hi-inv"><Icon name="sparkle" size={20} /></span>Where the AI helps, and where it stops</h2>
+            <h3>What it does</h3>
+            <ul className="lp-tiles">{USES.map(([t, b], i) => (<li key={t}><Icon name={USE_ICONS[i]} size={22} /><strong>{t}</strong><span>{b}</span></li>))}</ul>
+            <h3>Rules it follows</h3>
+            <ul className="lp-tiles lp-tiles-5">{RULES.map(([t, b], i) => (<li key={t}><Icon name={RULE_ICONS[i]} size={22} /><strong>{t}</strong><span>{b}</span></li>))}</ul>
+            <p className="lp-cap">Laura chooses how far the agent goes for each task: <b>Auto</b>, <b>Ask me</b> or <b>Never</b>. It’s in Company settings, Agent tab.</p>
           </div>
-          <p className="lp-cap">Laura chooses how far the agent goes for each task: Auto, Ask me or Never. It’s in Company settings, Agent tab.</p>
         </section>
 
         <section id="figma" className="lp-sec" aria-labelledby="h-fig">
-          <h2 id="h-fig">How the Figma file is organised</h2>
+          <h2 id="h-fig"><span className="lp-hi"><Icon name="grid" size={20} /></span>How the Figma file is organised</h2>
           <p className="lp-lead-sm">Ten pages, from research to handoff. Everything uses auto-layout, spacing follows an 8px scale, and layers are named the way a team would name them.</p>
 
           <h3>Pages</h3>
           <ul className="lp-cards">
-            {PAGES.map(([n, id, b]) => (
-              <li key={n}><a href={fig(id)} target="_blank" rel="noreferrer"><strong>{n}</strong><span>{b}</span></a></li>
+            {PAGES.map(([n, id, b], i) => (
+              <li key={n}><a className="lp-pg" href={fig(id)} target="_blank" rel="noreferrer"><span className="lp-ico lp-ico-sm"><Icon name={PAGE_ICONS[i]} size={18} /></span><span><strong>{n}</strong><span>{b}</span></span></a></li>
             ))}
           </ul>
 
@@ -196,8 +215,8 @@ export default function Landing() {
 
           <h3>Screens (page 07)</h3>
           <ul className="lp-cards lp-cards-4">
-            {SCREENS.map(([n, id, b]) => (
-              <li key={n}><a href={fig(id)} target="_blank" rel="noreferrer"><strong>{n}</strong><span>{b}</span></a></li>
+            {SCREENS.map(([n, id, b], i) => (
+              <li key={n}><a className="lp-pg" href={fig(id)} target="_blank" rel="noreferrer"><span className="lp-ico lp-ico-sm"><Icon name={SCREEN_ICONS[i]} size={18} /></span><span><strong>{n}</strong><span>{b}</span></span></a></li>
             ))}
           </ul>
           <p className="lp-cap">Each screen has notes, numbered pins and a link to its live prototype state.</p>
@@ -207,7 +226,7 @@ export default function Landing() {
         </section>
 
         <section className="lp-sec" aria-labelledby="h-out">
-          <h2 id="h-out">What I didn’t do</h2>
+          <h2 id="h-out"><span className="lp-hi"><Icon name="alert" size={20} /></span>What I didn’t do</h2>
           <ul className="lp-list">
             <li><strong>Other Company settings tabs</strong>They come from the WorkFlex Help Center. Only Agent is designed.</li>
             <li><strong>Real risk scoring</strong>The agent’s output is sample data. I show how it explains, not how it scores.</li>
