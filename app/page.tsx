@@ -770,13 +770,12 @@ export default function Page() {
       <header className="cs-bar">
         <span className="t-caption cs-note">Case study concept by Debora Moratalla · Not a WorkFlex product · Sample data</span>
         <span className="t-caption c-muted cs-hint">{ORDER.length} requests in the queue · ‹ › or J K to move</span>
-        <label className="cs-role t-caption">
-          <span className="c-muted">Preview as</span>
-          <select aria-label="Preview the screen as this role" value={role} onChange={(e) => setRole(e.target.value as Role)}>
-            <option value="gm">Global Mobility</option>
-            <option value="hr">HR approver (cannot approve without coverage)</option>
-          </select>
-        </label>
+        <div className="cs-role t-caption" role="group" aria-label="Choose whose screen you are looking at">
+          <span className="c-muted">See this screen as</span>
+          <button className="cs-seg t-label-s" aria-pressed={role === 'gm'} onClick={() => setRole('gm')}>Global Mobility</button>
+          <button className="cs-seg t-label-s" aria-pressed={role === 'hr'} onClick={() => setRole('hr')}>HR approver</button>
+          {role === 'hr' && <span className="c-muted">HR cannot approve without coverage</span>}
+        </div>
         <button className="btn btn-secondary cs-tour" onClick={() => goTour(tourResume.current)}><Icon name="book" /> Walkthrough</button>
       </header>
       {tour !== null && <Tour step={tour} onStep={goTour} onClose={closeTour} onTry={tryQuestion} />}
