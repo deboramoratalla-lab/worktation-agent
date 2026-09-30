@@ -90,6 +90,7 @@ export default function Page() {
     // Deep link from the Figma file: ?s=ready|working|check|conflict opens that request, no tour
     const id = new URLSearchParams(window.location.search).get('s') as ScenarioId | null;
     if (id && ORDER.includes(id)) { try { localStorage.setItem('tour-seen', '1'); } catch {} setScenario(id); setOpen(true); }
+    if (new URLSearchParams(window.location.search).get('v') === 'settings') { try { localStorage.setItem('tour-seen', '1'); } catch {} setView('settings'); }
   }, []);
   useEffect(() => {
     try { if (!localStorage.getItem('tour-seen')) { localStorage.setItem('tour-seen', '1'); setTimeout(() => goTour(0), 600); } } catch {}
