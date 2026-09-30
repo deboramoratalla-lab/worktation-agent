@@ -777,7 +777,7 @@ function Sidebar({ needsYou }: { needsYou: number }) {
       <div className="sidebar-head"><div className="logo"><Logo /></div><button className="icon-btn" aria-label="Collapse menu"><Icon name="menu" /></button></div>
       {items.map((g, gi) => (
         <div key={gi} className="nav-group">
-          <div className="nav-title t-overline">{titles[gi]}</div>
+          <div className="nav-title t-label-s">{titles[gi]}</div>
           {g.map(([label, icon, active]) => (
             <a key={label} href="#" onClick={(e) => e.preventDefault()} className={`nav-item t-label-m ${active ? 'active' : ''}`} style={{ textDecoration: 'none' }} aria-current={active ? 'page' : undefined}>
               <Icon name={icon} /> {label}
