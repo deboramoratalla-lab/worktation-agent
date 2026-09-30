@@ -19,7 +19,7 @@
   --color-bg-canvas: var(--color-neutral-100); --color-bg-surface: var(--color-white); --color-bg-subtle: var(--color-paper-50);
   --color-bg-inverse: var(--color-teal-800); --color-bg-inverse-hover: var(--color-mint-50);
   --color-bg-brand-subtle: var(--color-mint-200); --color-bg-sidebar: var(--color-neutral-50); --color-bg-hover: var(--color-neutral-200);
-  --color-bg-overlay: var(--color-bg-overlay); --color-bg-overlay-strong: var(--color-bg-overlay-strong);
+  --color-bg-overlay: rgba(22, 32, 30, 0.4); --color-bg-overlay-strong: rgba(22, 32, 30, 0.55);
   --color-text-primary: var(--color-ink-900); --color-text-secondary: var(--color-ink-500); --color-text-muted: var(--color-ink-300);
   --color-text-inverse: var(--color-white); --color-text-on-inverse-muted: var(--color-mint-300);
   --color-text-brand: var(--color-green-700); --color-text-link: var(--color-green-700);
