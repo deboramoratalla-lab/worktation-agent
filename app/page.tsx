@@ -60,6 +60,7 @@ export default function Page() {
   const [activity, setActivity] = useState<ActivityEntry[]>(req.activity);
   const [assess, setAssess] = useState<AssessState>({ status: 'loading' });
   const [approved, setApproved] = useState(false);
+  const [rejected, setRejected] = useState(false);
   const [noCoverage, setNoCoverage] = useState(false);
   // Demo only: who is looking. Only Global Mobility may approve past a rule.
   const [role, setRole] = useState<Role>('gm');
@@ -150,6 +151,7 @@ export default function Page() {
   useEffect(() => {
     setActivity(baseReq.activity);
     setApproved(false);
+    setRejected(false);
     setNoCoverage(false);
     setSentToGM(false);
     setDismissed({});
@@ -538,7 +540,12 @@ export default function Page() {
                   <div className="pta">
                     <div className="verdict">
                       <RiskBadge level={topLevel} />
-                      {approved ? (
+                      {rejected ? (
+                        <>
+                          <p className="t-heading-m">Rejected</p>
+                          <p className="c-secondary">{`You rejected this request today. ${firstName} and Tom were notified. Your reason is in the log.`}</p>
+                        </>
+                      ) : approved ? (
                         <>
                           <p className="t-heading-m">Approved</p>
                           <p className="c-secondary">{noCoverage ? `You approved this request today without WorkFlex coverage. ${firstName} and Tom were notified. The agent keeps chasing the visa.` : `You approved this request today. ${firstName} and Tom were notified.`}</p>
@@ -577,7 +584,9 @@ export default function Page() {
 
                     <Days req={req} blocked={checks.some((c) => c.id === 'year-mismatch')} />
 
-                    {approved ? (
+                    {rejected ? (
+                      <div className="done-box"><Icon name="close" /> Rejected today</div>
+                    ) : approved ? (
                       <div className="done-box"><Icon name="check" /> Approved today</div>
                     ) : canApproveWithoutCoverage ? (
                       <div className="actions stacked">
@@ -737,7 +746,7 @@ export default function Page() {
               <div className="dialog-actions">
                 <button className="btn btn-secondary" onClick={closeDialog}>{dialog.kind === 'reject' ? 'Keep request' : dialog.kind === 'reminder' ? 'Don’t send' : 'Go back'}</button>
                 {dialog.kind === 'reject' && (
-                  <button className="btn btn-danger" disabled={!dialog.text.trim() || dialog.streaming} onClick={() => { closeDialog(); logDecision({ kind: 'decision', title: 'You rejected the request', body: dialog.text, time: '' }); showToast(`Request rejected. ${firstName} and Tom were notified.`); }}>Reject request</button>
+                  <button className="btn btn-danger" disabled={!dialog.text.trim() || dialog.streaming} onClick={() => { closeDialog(); setRejected(true); logDecision({ kind: 'decision', title: 'You rejected the request', body: `Reason: ${dialog.text}`, time: '' }); showToast(`Request rejected. ${firstName} and Tom were notified.`, () => { setRejected(false); log({ kind: 'decision', title: 'You undid the rejection', body: 'The decision and its snapshot stay in the log.', time: `${at()}` }); }); }}>Reject request</button>
                 )}
                 {dialog.kind === 'reminder' && (
                   <button className="btn btn-primary" disabled={!dialog.text.trim() || dialog.streaming} onClick={() => { closeDialog(); log({ kind: 'comment', title: 'You sent the agent’s reminder to Anna Roth', body: dialog.text, time: `${at()}`, source: 'Rule: remind approvers after 2 days (Ask me)' }); showToast('Reminder sent to Anna Roth.'); }}><Icon name="send" /> Send reminder</button>
