@@ -771,10 +771,10 @@ export default function Page() {
         <span className="t-caption cs-note">Case study concept by Debora Moratalla · Not a WorkFlex product · Sample data</span>
         <span className="t-caption c-muted cs-hint">{ORDER.length} requests in the queue · ‹ › or J K to move</span>
         <label className="cs-role t-caption">
-          <span className="c-muted">Viewing as</span>
-          <select value={role} onChange={(e) => setRole(e.target.value as Role)}>
+          <span className="c-muted">Preview as</span>
+          <select aria-label="Preview the screen as this role" value={role} onChange={(e) => setRole(e.target.value as Role)}>
             <option value="gm">Global Mobility</option>
-            <option value="hr">HR approver</option>
+            <option value="hr">HR approver (cannot approve without coverage)</option>
           </select>
         </label>
         <button className="btn btn-secondary cs-tour" onClick={() => goTour(tourResume.current)}><Icon name="book" /> Walkthrough</button>
