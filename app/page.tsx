@@ -361,12 +361,12 @@ export default function Page() {
             <div className="topbar">
               <div className="crumb t-label-m">
                 <span className="briefcase"><Icon name="briefcase" size={20} /></span>
-                <span className="c-link">Workations</span>
-                <Icon name="chevron-right" className="c-secondary" />
+                <span className="c-link crumb-hide">Workations</span>
+                <Icon name="chevron-right" className="c-secondary crumb-hide" />
                 <span>{req.id}</span>
               </div>
               <div className="queue">
-                <span className="t-caption c-secondary">{ORDER.indexOf(scenario) + 1} of {ORDER.length} requests</span>
+                <span className="t-caption c-secondary crumb-hide">{ORDER.indexOf(scenario) + 1} of {ORDER.length} requests</span>
                 <button className="icon-btn bordered" aria-label="Previous request (K)" onClick={() => move(-1)}><Icon name="chevron-left" /></button>
                 <button className="icon-btn bordered" aria-label="Next request (J)" onClick={() => move(1)}><Icon name="chevron-right" /></button>
               </div>
