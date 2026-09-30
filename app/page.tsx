@@ -862,6 +862,7 @@ function Dialog({ children, onClose }: { children: React.ReactNode; onClose: () 
 }
 
 function FlagAT() {
+  // Illustrative national flags: intentionally outside the token system
   return <span className="flag"><i style={{ height: 5, background: '#cc212e' }} /><i style={{ height: 4, background: '#fff' }} /><i style={{ height: 5, background: '#cc212e' }} /></span>;
 }
 function FlagTH() {

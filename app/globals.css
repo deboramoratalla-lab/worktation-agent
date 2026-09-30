@@ -1,39 +1,55 @@
-/* Tokens exported from Figma: 01. Core / 02. Semantic / 03. Component */
+/* Tokens exported from Figma (file cl9iO18ttAAfWUZpsvTJ0V): 01. Core / 02. Semantic / 03. Component.
+   Name rule: Figma `a/b/c` -> `--color-a-b-c` (colours), `--spacing-*`, `--radius-*`; component tokens drop the `color-` prefix.
+   Components use Semantic or Component tokens only. Core tokens are never used in component rules. */
 :root {
   /* 01. Core */
-  --color-white: #ffffff; --color-ink-900: #16201e; --color-ink-500: #3c4742; --color-ink-300: #646e68;
-  --color-teal-950: #042f2d; --color-teal-800: #064946; --color-green-700: #016a5a; --color-green-600: #00826f;
-  --color-mint-200: #d7ebe7; --color-pink-700: #b5245e; --color-pink-600: #eb3b81; --color-pink-50: #fdecf3;
+  --color-white: #ffffff; --color-ink-900: #16201e; --color-ink-700: #2a3936; --color-ink-500: #3c4742; --color-ink-300: #646e68;
+  --color-teal-950: #042f2d; --color-teal-900: #0a322f; --color-teal-800: #064946; --color-teal-700: #0a5a55;
+  --color-green-700: #016a5a; --color-green-600: #00826f; --color-green-400: #3fa893;
+  --color-mint-50: #e6f0ee; --color-mint-100: #eaf3f2; --color-mint-200: #d7ebe7; --color-mint-300: #b9d3cf;
+  --color-pink-50: #fdecf3; --color-pink-600: #eb3b81; --color-pink-700: #b5245e; --color-yellow-400: #efeb75;
   --color-amber-50: #fbf3e2; --color-amber-200: #f0e0bd; --color-amber-500: #e0a23a; --color-amber-700: #855a0c;
   --color-red-50: #fcebea; --color-red-200: #f3c9c5; --color-red-600: #c8322b; --color-red-700: #9a2a22;
-  --color-line-100: #dce7e3; --color-line-200: #c8d8d2; --color-paper-50: #fbfaf6;
+  --color-line-100: #dce7e3; --color-line-200: #c8d8d2; --color-paper-50: #fbfaf6; --color-paper-100: #f1ede5;
   --color-neutral-50: #f7f8f8; --color-neutral-100: #f0f2f2; --color-neutral-200: #e4e8e7;
-  --spacing-half: 4px; --spacing-1: 8px; --spacing-2: 16px; --spacing-3: 24px; --spacing-4: 32px; --spacing-5: 40px; --spacing-6: 48px;
-  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 16px; --radius-full: 999px;
+  --spacing-0: 0; --spacing-half: 4px; --spacing-1: 8px; --spacing-2: 16px; --spacing-3: 24px; --spacing-4: 32px; --spacing-5: 40px; --spacing-6: 48px; --spacing-8: 64px; --spacing-10: 80px;
+  --radius-none: 0; --radius-sm: 4px; --radius-md: 8px; --radius-lg: 16px; --radius-full: 999px;
 
   /* 02. Semantic */
   --color-bg-canvas: var(--color-neutral-100); --color-bg-surface: var(--color-white); --color-bg-subtle: var(--color-paper-50);
+  --color-bg-inverse: var(--color-teal-800); --color-bg-inverse-hover: var(--color-mint-50);
   --color-bg-brand-subtle: var(--color-mint-200); --color-bg-sidebar: var(--color-neutral-50); --color-bg-hover: var(--color-neutral-200);
+  --color-bg-overlay: var(--color-bg-overlay); --color-bg-overlay-strong: var(--color-bg-overlay-strong);
   --color-text-primary: var(--color-ink-900); --color-text-secondary: var(--color-ink-500); --color-text-muted: var(--color-ink-300);
-  --color-text-inverse: var(--color-white); --color-text-brand: var(--color-green-700); --color-text-link: var(--color-green-700);
+  --color-text-inverse: var(--color-white); --color-text-on-inverse-muted: var(--color-mint-300);
+  --color-text-brand: var(--color-green-700); --color-text-link: var(--color-green-700);
   --color-border-default: var(--color-line-100); --color-border-strong: var(--color-line-200);
-  --color-action-primary-bg: var(--color-green-600); --color-action-primary-bg-hover: var(--color-green-700);
-  --color-agent-fg: var(--color-pink-700); --color-agent-bg: var(--color-pink-50); --color-focus-ring: var(--color-green-600);
-  --color-status-done-fg: var(--color-green-600);
+  --color-border-focus: var(--color-focus-ring); --color-focus-ring: var(--color-green-600);
+  --color-action-primary-bg: var(--color-green-600); --color-action-primary-bg-hover: var(--color-green-700); --color-action-primary-text: var(--color-white);
+  --color-action-secondary-bg: var(--color-white); --color-action-secondary-border: var(--color-line-200); --color-action-secondary-text: var(--color-ink-900);
+  --color-action-danger-bg: var(--color-red-600); --color-action-danger-text: var(--color-white);
+  --color-accent-highlight: var(--color-pink-600);
+  --color-agent-fg: var(--color-pink-700); --color-agent-bg: var(--color-pink-50);
+  --color-status-risk-low-fg: var(--color-green-700); --color-status-risk-low-bg: var(--color-mint-200);
+  --color-status-risk-medium-fg: var(--color-amber-700); --color-status-risk-medium-bg: var(--color-amber-50); --color-status-risk-medium-border: var(--color-amber-200);
+  --color-status-risk-high-fg: var(--color-red-700); --color-status-risk-high-bg: var(--color-red-50); --color-status-risk-high-border: var(--color-red-200);
+  --color-status-done-fg: var(--color-green-600); --color-status-pending-fg: var(--color-amber-500); --color-status-neutral-fg: var(--color-ink-300);
   --color-status-warning-fg: var(--color-amber-700); --color-status-warning-bg: var(--color-amber-50); --color-status-warning-border: var(--color-amber-200);
 
   /* 03. Component */
-  --button-primary-bg: var(--color-action-primary-bg); --button-primary-bg-hover: var(--color-action-primary-bg-hover); --button-primary-text: var(--color-white);
-  --button-secondary-bg: var(--color-white); --button-secondary-border: var(--color-line-200); --button-secondary-text: var(--color-ink-900);
-  --button-danger-bg: var(--color-red-600); --button-danger-text: var(--color-white);
-  --risk-badge-low-bg: var(--color-mint-200); --risk-badge-low-fg: var(--color-green-700);
-  --risk-badge-medium-bg: var(--color-amber-50); --risk-badge-medium-fg: var(--color-amber-700);
-  --risk-badge-high-bg: var(--color-red-50); --risk-badge-high-fg: var(--color-red-700);
+  --button-primary-bg: var(--color-action-primary-bg); --button-primary-bg-hover: var(--color-action-primary-bg-hover); --button-primary-text: var(--color-action-primary-text);
+  --button-secondary-bg: var(--color-action-secondary-bg); --button-secondary-border: var(--color-action-secondary-border); --button-secondary-text: var(--color-action-secondary-text);
+  --button-danger-bg: var(--color-action-danger-bg); --button-danger-text: var(--color-action-danger-text);
+  --risk-badge-low-bg: var(--color-status-risk-low-bg); --risk-badge-low-fg: var(--color-status-risk-low-fg);
+  --risk-badge-medium-bg: var(--color-status-risk-medium-bg); --risk-badge-medium-fg: var(--color-status-risk-medium-fg);
+  --risk-badge-high-bg: var(--color-status-risk-high-bg); --risk-badge-high-fg: var(--color-status-risk-high-fg);
   --alert-banner-warning-bg: var(--color-status-warning-bg); --alert-banner-warning-border: var(--color-status-warning-border);
-  --path-step-done-fg: var(--color-status-done-fg); --path-step-pending-fg: var(--color-amber-500);
-  --path-step-working-bg: var(--color-action-primary-bg); --path-step-blocked-fg: var(--color-red-700);
+  --path-step-done-fg: var(--color-status-done-fg); --path-step-pending-fg: var(--color-status-pending-fg);
+  --path-step-working-bg: var(--color-action-primary-bg); --path-step-blocked-fg: var(--color-status-risk-high-fg);
 
+  /* Effects (Figma effect styles Shadow/Float, Focus/Ring) */
   --shadow-float: 0 24px 56px -24px rgba(4, 47, 45, 0.42);
+  --shadow-focus-ring: 0 0 0 2px var(--color-white), 0 0 0 4px var(--color-focus-ring);
   color-scheme: light;
 }
 
@@ -42,15 +58,17 @@ html, body { margin: 0; height: 100%; }
 body { background: var(--color-bg-canvas); color: var(--color-text-primary); font-family: Figtree, system-ui, sans-serif; font-size: 14px; line-height: 20px; }
 button, input, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; background: none; border: 0; padding: 0; }
-:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--color-white), 0 0 0 4px var(--color-focus-ring); border-radius: var(--radius-sm); }
+:focus-visible { outline: none; box-shadow: var(--shadow-focus-ring); border-radius: var(--radius-sm); }
 p { margin: 0; }
 
 /* Text styles */
+.t-display { font-size: 32px; line-height: 40px; font-weight: 700; }
 .t-heading-l { font-size: 24px; line-height: 32px; font-weight: 600; }
 .t-heading-m { font-size: 20px; line-height: 28px; font-weight: 600; }
 .t-heading-s { font-size: 16px; line-height: 24px; font-weight: 600; }
 .t-label-m { font-size: 14px; line-height: 20px; font-weight: 500; }
 .t-label-s { font-size: 12px; line-height: 16px; font-weight: 500; }
+.t-body-m { font-size: 16px; line-height: 24px; font-weight: 400; }
 .t-body-s { font-size: 14px; line-height: 20px; }
 .t-caption { font-size: 12px; line-height: 16px; }
 .t-overline { font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.72px; text-transform: uppercase; }
@@ -66,7 +84,7 @@ p { margin: 0; }
 .cs-scenarios > span { margin-right: 4px; }
 .cs-seg { height: 28px; padding: 0 12px; border-radius: var(--radius-full); color: var(--color-text-secondary); }
 .cs-seg:hover { background: var(--color-bg-hover); }
-.cs-seg[aria-pressed="true"] { background: var(--color-bg-inverse, #064946); color: var(--color-white); }
+.cs-seg[aria-pressed="true"] { background: var(--color-bg-inverse); color: var(--color-white); }
 body { padding-top: 40px; }
 @media (max-width: 1023px) { .cs-note { display: none; } .cs-scenarios { overflow-x: auto; } }
 
@@ -89,13 +107,13 @@ body { padding-top: 40px; }
 .table-row .r { width: 260px; color: var(--color-text-secondary); }
 
 /* Drawer */
-.scrim { position: fixed; inset: 40px 0 0 0; background: var(--color-text-primary); opacity: 0.4; z-index: 10; }
+.scrim { position: fixed; inset: 40px 0 0 0; background: var(--color-bg-overlay); z-index: 10; }
 .drawer { position: fixed; top: 40px; right: 0; bottom: 0; width: min(100%, max(1120px, 73vw)); background: var(--color-bg-canvas); z-index: 11; display: flex; flex-direction: column; box-shadow: var(--shadow-float); animation: slide 200ms ease-out; }
 @keyframes slide { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .drawer { animation: fade 120ms linear; } @keyframes fade { from { opacity: 0; } } }
 .topbar { flex: none; height: 64px; display: flex; align-items: center; gap: 16px; padding: 16px 40px; background: var(--color-bg-surface); border-bottom: 1px solid var(--color-border-default); }
 .crumb { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
-.crumb .briefcase { color: var(--color-pink-600); }
+.crumb .briefcase { color: var(--color-accent-highlight); }
 .queue { display: flex; align-items: center; gap: 8px; }
 .divider { width: 1px; height: 24px; background: var(--color-border-strong); }
 .icon-btn { width: 32px; height: 32px; border-radius: var(--radius-md); display: grid; place-items: center; color: var(--color-text-secondary); }
@@ -186,7 +204,7 @@ body { padding-top: 40px; }
 .step-ic.Working { border: 2px dashed var(--path-step-working-bg); color: var(--path-step-working-bg); }
 .step-ic.Waiting { border: 2px solid var(--color-border-strong); color: var(--color-text-muted); }
 .step-ic.Needs { background: var(--color-status-warning-bg); border: 1px solid var(--color-status-warning-border); color: var(--color-status-warning-fg); }
-.step-ic.Blocked { background: var(--color-red-50); color: var(--path-step-blocked-fg); }
+.step-ic.Blocked { background: var(--color-status-risk-high-bg); color: var(--path-step-blocked-fg); }
 .step-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .step-top { display: flex; gap: 8px; align-items: center; }
 .step-top > :first-child { flex: 1; }
@@ -221,7 +239,7 @@ body { padding-top: 40px; }
 .alert.info .ic { color: var(--color-text-brand); }
 @media (max-width: 767px) { .alert { flex-wrap: wrap; } .alert-side { width: 100%; padding-left: 36px; } }
 .actions.stacked { display: flex; flex-direction: column; }
-.c-danger { color: var(--color-red-700); }
+.c-danger { color: var(--color-status-risk-high-fg); }
 .cs-role { display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
 .cs-role select { height: 28px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); padding: 0 10px; background: var(--color-bg-surface); font-size: 12px; }
 .checks { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -231,7 +249,7 @@ body { padding-top: 40px; }
 .locked-chip { font-size: 11px; line-height: 16px; padding: 0 6px; border-radius: var(--radius-full); border: 1px solid var(--color-border-strong); color: var(--color-text-muted); }
 .snapshot { margin: 4px 0 0; padding: 8px 12px 8px 24px; background: var(--color-bg-subtle); border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 2px; }
 .tip { position: relative; display: inline-block; }
-.tip [role='tooltip'] { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: 240px; padding: 8px 12px; border-radius: var(--radius-md); background: var(--color-teal-800); color: var(--color-white); font-size: 12px; line-height: 16px; box-shadow: var(--shadow-float); z-index: 5; visibility: hidden; opacity: 0; transition: opacity 120ms ease; }
+.tip [role='tooltip'] { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: 240px; padding: 8px 12px; border-radius: var(--radius-md); background: var(--color-bg-inverse); color: var(--color-white); font-size: 12px; line-height: 16px; box-shadow: var(--shadow-float); z-index: 5; visibility: hidden; opacity: 0; transition: opacity 120ms ease; }
 .tip:hover [role='tooltip'], .tip:focus-within [role='tooltip'] { visibility: visible; opacity: 1; }
 .date-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .field { display: flex; flex-direction: column; gap: 8px; }
@@ -239,8 +257,8 @@ body { padding-top: 40px; }
 .impact, .changes { border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; gap: 8px; }
 .impact { background: var(--color-status-warning-bg); }
 .impact .t-overline { color: var(--color-status-warning-fg); }
-.changes { background: var(--color-red-50); }
-.changes .t-overline { color: var(--color-red-700); }
+.changes { background: var(--color-status-risk-high-bg); }
+.changes .t-overline { color: var(--color-status-risk-high-fg); }
 
 /* Menu */
 .menu-wrap { position: relative; }
@@ -248,10 +266,10 @@ body { padding-top: 40px; }
 .menu button { text-align: left; padding: 8px; border-radius: var(--radius-sm); display: flex; gap: 8px; align-items: center; }
 .menu button:hover { background: var(--color-bg-hover); }
 .menu hr { border: 0; border-top: 1px solid var(--color-border-default); margin: 8px 0; }
-.menu .danger { color: var(--color-red-700); }
+.menu .danger { color: var(--color-status-risk-high-fg); }
 
 /* Dialog */
-.dialog-scrim { position: fixed; inset: 0; z-index: 30; background: rgba(22, 32, 30, 0.4); display: grid; place-items: center; padding: 16px; }
+.dialog-scrim { position: fixed; inset: 0; z-index: 30; background: var(--color-bg-overlay); display: grid; place-items: center; padding: 16px; }
 .dialog { width: min(520px, 100%); background: var(--color-bg-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-float); padding: 24px; display: flex; flex-direction: column; gap: 16px; }
 .dialog textarea { width: 100%; min-height: 128px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); padding: 12px; resize: vertical; background: var(--color-bg-surface); }
 .dialog-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
@@ -265,16 +283,16 @@ body { padding-top: 40px; }
 /* Top bar extras */
 .cs-hint { white-space: nowrap; }
 .cs-tour { height: 28px; padding: 0 12px; border-radius: var(--radius-full); font-size: 12px; line-height: 16px; }
-.cs-tour svg { color: var(--color-teal-800); }
+.cs-tour svg { color: var(--color-bg-inverse); }
 @media (max-width: 1023px) { .cs-hint { display: none; } }
 
 /* Walkthrough: a meta layer, visually separate from the product (dark surface, no product greens or agent pink) */
 .tour-block { position: fixed; inset: 0; z-index: 60; }
-.tour-block.dim { background: rgba(22, 32, 30, 0.55); }
-.tour-spot { position: fixed; z-index: 61; border-radius: var(--radius-lg); box-shadow: 0 0 0 2px var(--color-white), 0 0 0 9999px rgba(22, 32, 30, 0.55); pointer-events: none; transition: opacity 180ms ease; }
+.tour-block.dim { background: var(--color-bg-overlay-strong); }
+.tour-spot { position: fixed; z-index: 61; border-radius: var(--radius-lg); box-shadow: 0 0 0 2px var(--color-white), 0 0 0 9999px var(--color-bg-overlay-strong); pointer-events: none; transition: opacity 180ms ease; }
 .tour-pop.resizing { transition: opacity 180ms ease, top 200ms ease, left 200ms ease; }
 .tour-spot.resizing { transition: opacity 180ms ease, top 200ms ease, height 200ms ease, width 200ms ease; }
-.tour-pop { --tour-bg: var(--color-teal-800); --tour-fg: var(--color-white); --tour-muted: #b9d3cf; --tour-line: rgba(255,255,255,.18);
+.tour-pop { --tour-bg: var(--color-bg-inverse); --tour-fg: var(--color-text-inverse); --tour-muted: var(--color-text-on-inverse-muted); --tour-line: rgba(255,255,255,.18);
   position: fixed; z-index: 62; width: 360px; max-width: calc(100vw - 32px); background: var(--tour-bg); color: var(--tour-fg); border-radius: var(--radius-lg);
   box-shadow: 0 24px 56px -16px rgba(4, 47, 45, .6); padding: 24px; display: flex; flex-direction: column; gap: 16px; outline: none; transition: opacity 180ms ease; }
 .tour-pop.intro { width: 440px; padding: 32px; }
@@ -296,8 +314,8 @@ body { padding-top: 40px; }
 .tour-body { color: var(--tour-muted); font-size: 14px; line-height: 22px; }
 .tour-actions { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 8px; }
 .tour-btn { height: 40px; min-width: 44px; padding: 0 16px; border-radius: var(--radius-sm); font-weight: 500; }
-.tour-btn.solid { background: var(--color-white); color: var(--color-teal-800); }
-.tour-btn.solid:hover { background: #e6f0ee; }
+.tour-btn.solid { background: var(--color-white); color: var(--color-bg-inverse); }
+.tour-btn.solid:hover { background: var(--color-bg-inverse-hover); }
 .tour-btn.ghost { color: var(--tour-fg); }
 .tour-btn.ghost:hover { background: rgba(255,255,255,.1); }
 .tour-btn:focus-visible { box-shadow: 0 0 0 2px var(--tour-bg), 0 0 0 4px var(--color-white); }
