@@ -87,15 +87,15 @@ export default function Page() {
     setTimeout(() => { const el = document.getElementById('ask'); el?.scrollIntoView({ block: 'center', behavior: 'smooth' }); el?.focus(); }, 50);
   }, [closeTour]);
   useEffect(() => {
-    // Deep link from the Figma file: ?s=ready|working|check|conflict opens that request, no tour
-    const id = new URLSearchParams(window.location.search).get('s') as ScenarioId | null;
-    if (id && ORDER.includes(id)) { try { localStorage.setItem('tour-seen', '1'); } catch {} setScenario(id); setOpen(true); }
-    if (new URLSearchParams(window.location.search).get('v') === 'settings') { try { localStorage.setItem('tour-seen', '1'); } catch {} setView('settings'); }
-  }, []);
-  useEffect(() => {
-    // ?tour=1 starts the guided walkthrough even if it was seen before (linked from the landing)
-    if (new URLSearchParams(window.location.search).get('tour') === '1') { const t = setTimeout(() => goTour(0), 600); return () => clearTimeout(t); }
-    try { if (!localStorage.getItem('tour-seen')) { localStorage.setItem('tour-seen', '1'); setTimeout(() => goTour(0), 600); } } catch {}
+    // One startup effect, so a deep link always wins over the first-visit tour.
+    // ?s=ready|working|check|conflict opens that request. ?v=settings opens Company settings (Agent tab). ?tour=1 starts the walkthrough.
+    const q = new URLSearchParams(window.location.search);
+    const id = q.get('s') as ScenarioId | null;
+    const seen = () => { try { localStorage.setItem('tour-seen', '1'); } catch {} };
+    if (q.get('v') === 'settings') { seen(); setTour(null); setDialog(null); setView('settings'); return; }
+    if (id && ORDER.includes(id)) { seen(); setScenario(id); setOpen(true); return; }
+    if (q.get('tour') === '1') { const t = setTimeout(() => goTour(0), 600); return () => clearTimeout(t); }
+    try { if (!localStorage.getItem('tour-seen')) { localStorage.setItem('tour-seen', '1'); const t = setTimeout(() => goTour(0), 600); return () => clearTimeout(t); } } catch {}
   }, [goTour]);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const lastFocus = useRef<HTMLElement | null>(null);
