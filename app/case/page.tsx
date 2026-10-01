@@ -95,7 +95,7 @@ export default function Landing() {
               <div className="lp-cta">
                 <a className="lp-btn lp-btn-pink" href="#prototype">Try the prototype</a>
                 <a className="lp-btn lp-btn-line" href={fig()} target="_blank" rel="noreferrer">See the Figma file</a>
-                <a className="lp-watch" href="#video"><span className="lp-watch-i"><svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" /></svg></span>Watch me walk through it (9 min)</a>
+                <a className="lp-watch" href="#video"><span className="lp-watch-i"><svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" /></svg></span>Watch me walk through it (7 min)</a>
               </div>
               <p className="lp-meta">I’m Debora, and this is a concept, not a WorkFlex product. The prototype asks for a password: it’s the one I sent you.</p>
             </div>
@@ -175,12 +175,12 @@ export default function Landing() {
         <section id="video" data-reveal className="lp-sec lp-tone-b" aria-labelledby="h-video">
           <div className="lp-in">
             <Head eyebrow="The video" sub="First the idea, then the prototype, then the Figma file.">
-              <span id="h-video">Nine minutes, <Mark>in my own words</Mark>.</span>
+              <span id="h-video">Seven minutes, <Mark>in my own words</Mark>.</span>
             </Head>
-            <div className="lp-video" role="img" aria-label="Video placeholder">
-              <span className="lp-play"><svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" /></svg></span>
-              <span>Video coming soon</span>
-            </div>
+            <video className="lp-video-el" controls preload="metadata" playsInline aria-label="Walkthrough of the Workation approval case study, 7 minutes">
+              <source src="/video/workation-case-study.mp4" type="video/mp4" />
+              Your browser can’t play this video. <a href="/video/workation-case-study.mp4">Download it</a>.
+            </video>
           </div>
         </section>
 

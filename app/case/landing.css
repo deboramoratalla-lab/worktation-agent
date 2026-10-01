@@ -160,3 +160,5 @@ html { scroll-behavior: smooth; scroll-padding-top: 72px; }
 .lp-dark .lp-mark { background: none; color: var(--color-yellow-400); padding: 0; margin: 0; }
 .lp-strip-tour { margin: 0 0 32px; background: var(--color-bg-inverse); color: #fff; border-color: transparent; } .lp-strip-tour p { color: var(--color-mint-300); } .lp-strip-tour h3 { color: #fff; }
 .lp-or { text-align: center; margin: 0 0 16px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--color-text-secondary); }
+
+.lp-video-el { display: block; width: 100%; aspect-ratio: 16/9; border-radius: 24px; background: var(--color-teal-900); box-shadow: 0 24px 56px -28px rgba(4,47,45,.5); }
