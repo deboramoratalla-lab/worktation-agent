@@ -177,10 +177,10 @@ export default function Landing() {
             <Head eyebrow="The video" sub="First the idea, then the prototype, then the Figma file.">
               <span id="h-video">Seven minutes, <Mark>in my own words</Mark>.</span>
             </Head>
-            <video className="lp-video-el" controls preload="metadata" playsInline aria-label="Walkthrough of the Workation approval case study, 7 minutes">
-              <source src="/video/workation-case-study.mp4" type="video/mp4" />
-              Your browser can’t play this video. <a href="/video/workation-case-study.mp4">Download it</a>.
-            </video>
+            <div className="lp-video-wrap">
+              <iframe className="lp-video-el" src="https://www.youtube-nocookie.com/embed/Wf3vdSy3dF8?rel=0" title="Walkthrough of the Workation approval case study, 7 minutes" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />
+            </div>
+            <p className="lp-foot-note"><a href="https://youtu.be/Wf3vdSy3dF8" target="_blank" rel="noreferrer">Watch it on YouTube</a></p>
           </div>
         </section>
 
