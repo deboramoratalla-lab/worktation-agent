@@ -97,7 +97,7 @@ export default function Landing() {
                 <a className="lp-btn lp-btn-line" href={fig()} target="_blank" rel="noreferrer">See the Figma file</a>
                 <a className="lp-watch" href="#video"><span className="lp-watch-i"><svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" /></svg></span>Watch me walk through it (7 min)</a>
               </div>
-              <p className="lp-meta">I’m Debora, and this is a concept, not a WorkFlex product. The prototype asks for a password: it’s the one I sent you.</p>
+              <p className="lp-meta">I’m Debora, and this is a concept, not a WorkFlex product.</p>
             </div>
             <div className="lp-win lp-win-hero" aria-hidden="true">
               <div className="lp-win-bar"><i /><i /><i /><span>workation-agent.vercel.app</span></div>
