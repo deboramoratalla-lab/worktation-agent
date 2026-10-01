@@ -178,9 +178,9 @@ export default function Landing() {
               <span id="h-video">Seven minutes, <Mark>in my own words</Mark>.</span>
             </Head>
             <div className="lp-video-wrap">
-              <iframe className="lp-video-el" src="https://www.youtube-nocookie.com/embed/Wf3vdSy3dF8?rel=0" title="Walkthrough of the Workation approval case study, 7 minutes" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />
+              <iframe className="lp-video-el" src="https://www.youtube-nocookie.com/embed/2xqqWInSv_E?rel=0" title="Walkthrough of the Workation approval case study, 7 minutes" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />
             </div>
-            <p className="lp-foot-note"><a href="https://youtu.be/Wf3vdSy3dF8" target="_blank" rel="noreferrer">Watch it on YouTube</a></p>
+            <p className="lp-foot-note"><a href="https://youtu.be/2xqqWInSv_E" target="_blank" rel="noreferrer">Watch it on YouTube</a></p>
           </div>
         </section>
 
